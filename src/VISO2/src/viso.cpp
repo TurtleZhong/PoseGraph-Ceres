@@ -32,7 +32,7 @@ VisualOdometry::VisualOdometry (parameters param) : param(param) {
   matcher   = new Matcher(param.match);
   Tr_delta  = Matrix::eye(4);
   Tr_valid  = false;
-  srand(0);
+  srand(0);     /*这个函数主要是为了产生真正的随机数*/
 }
 
 VisualOdometry::~VisualOdometry () {

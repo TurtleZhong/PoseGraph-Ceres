@@ -24,6 +24,9 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 #include "viso.h"
 
+/* VisualOdometryStero 继承了 VisualOdometry */
+/* 并将父类estimateMotion( ) 虚函数实现了*/
+
 class VisualOdometryStereo : public VisualOdometry {
 
 public:
@@ -60,6 +63,7 @@ public:
   //                     when small/no motions are observed to obtain Tr_delta wrt
   //                     an older coordinate system / time step than the previous one.
   // output: returns false if an error occured
+  // uint8_t 256位
   bool process (uint8_t *I1,uint8_t *I2,int32_t* dims,bool replace=false);
 
   using VisualOdometry::process;
