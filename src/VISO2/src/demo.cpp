@@ -35,7 +35,10 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #include <png++/png.hpp>
 #include <opencv2/opencv.hpp>
 #include <map>
+#include <fstream>
+#include <sstream>
 
+#define BOLDBLUE "\033[1m\033[34m" /* Bold Blue */
 
 using namespace std;
 using namespace cv;
@@ -59,10 +62,15 @@ int main (int argc, char** argv) {
     VisualOdometryStereo::parameters param;
 
     // calibration parameters for sequence 2010_03_09_drive_0019
-    param.calib.f  = 645.24; // focal length in pixels
-    param.calib.cu = 635.96; // principal point (u-coordinate) in pixels
-    param.calib.cv = 194.13; // principal point (v-coordinate) in pixels
-    param.base     = 0.5707; // baseline in meters
+    //    param.calib.f  = 645.24; // focal length in pixels
+    //    param.calib.cu = 635.96; // principal point (u-coordinate) in pixels
+    //    param.calib.cv = 194.13; // principal point (v-coordinate) in pixels
+    //    param.base     = 0.5707; // baseline in meters
+
+    param.calib.f  = 718.856; // focal length in pixels
+    param.calib.cu = 607.1928; // principal point (u-coordinate) in pixels
+    param.calib.cv = 185.2157; // principal point (v-coordinate) in pixels
+    param.base     = 0.5372; // baseline in meters
 
     // init visual odometry
     VisualOdometryStereo viso(param);
@@ -72,100 +80,125 @@ int main (int argc, char** argv) {
     Matrix pose = Matrix::eye(4);
 
     Mat previous_imLeft,previous_imRight;
+
+    ofstream outFile;
+    outFile.open("../camera_poses.txt");
     
     // loop through all frames i=0:372
-    for (int32_t i=0; i<1000; i++) {
+    for (int32_t i=0; i<4660; i++) {
 
         // input file names
         char base_name[256];
         sprintf(base_name,"%06d.png",i);
-        string left_img_file_name  = dir + "/I1_" + base_name;
-        string right_img_file_name = dir + "/I2_" + base_name;
+        //        string left_img_file_name  = dir + "/I1_" + base_name;
+        //        string right_img_file_name = dir + "/I2_" + base_name;
+        string left_img_file_name = dir + "/image_0/" + base_name;
+        string right_img_file_name = dir + "/image_1/" + base_name;
+
+        //cout << "left_img_file_name = " << left_img_file_name << endl;
 
         // catch image read/write errors here
-        try {
-
-            // load left and right input image
-            png::image< png::gray_pixel > left_img(left_img_file_name);
-            png::image< png::gray_pixel > right_img(right_img_file_name);
 
 
+        // load left and right input image
+        png::image< png::gray_pixel > left_img(left_img_file_name);
+        png::image< png::gray_pixel > right_img(right_img_file_name);
 
 
-            // image dimensions
-            int32_t width  = left_img.get_width();
-            int32_t height = left_img.get_height();
 
-            // convert input images to uint8_t buffer
-            uint8_t* left_img_data  = (uint8_t*)malloc(width*height*sizeof(uint8_t));
-            uint8_t* right_img_data = (uint8_t*)malloc(width*height*sizeof(uint8_t));
-            int32_t k=0;
-            for (int32_t v=0; v<height; v++) {
-                for (int32_t u=0; u<width; u++) {
-                    left_img_data[k]  = left_img.get_pixel(u,v);
-                    right_img_data[k] = right_img.get_pixel(u,v);
-                    k++;
-                }
+
+        // image dimensions
+        int32_t width  = left_img.get_width();
+        int32_t height = left_img.get_height();
+
+        // convert input images to uint8_t buffer
+        uint8_t* left_img_data  = (uint8_t*)malloc(width*height*sizeof(uint8_t));
+        uint8_t* right_img_data = (uint8_t*)malloc(width*height*sizeof(uint8_t));
+        int32_t k=0;
+        for (int32_t v=0; v<height; v++) {
+            for (int32_t u=0; u<width; u++) {
+                left_img_data[k]  = left_img.get_pixel(u,v);
+                right_img_data[k] = right_img.get_pixel(u,v);
+                k++;
             }
-
-            // status
-            cout << "Processing: Frame: " << i;
-
-            Mat imLeft(height,width,CV_8UC1,left_img_data);
-            Mat imRight(imLeft.size(), CV_8UC1, right_img_data);
-
-
-
-            // compute visual odometry
-            int32_t dims[] = {width,height,width};
-            if (viso.process(left_img_data,right_img_data,dims)) {
-
-                /*plot the right matchs add by zhong*/
-                if(i > 3)
-                {
-                    std::vector<Matcher::p_match> featureMatchs = viso.getMatches();
-//                    Mat currentFrame = drawFeatureMatches(imLeft,imRight,featureMatchs,0);
-//                    Mat previousFrame = drawFeatureMatches(previous_imLeft,previous_imLeft,featureMatchs,1);
-//                    imshow("currentFrame",currentFrame);
-//                    imshow("previousFrame",previousFrame);
-
-                    Mat output = drawCircularMatches(imLeft,imRight,previous_imLeft,previous_imRight,featureMatchs);
-                    imshow("output",output);
-                }
-
-
-
-                // on success, update current pose
-                pose = pose * Matrix::inv(viso.getMotion());
-
-                // output some statistics
-                double num_matches = viso.getNumberOfMatches();
-                double num_inliers = viso.getNumberOfInliers();
-                cout << ", Matches: " << num_matches;
-                cout << ", Inliers: " << 100.0*num_inliers/num_matches << " %" << ", Current pose: " << endl;
-                cout << pose << endl << endl;
-
-            } else {
-                cout << " ... failed!" << endl;
-            }
-
-            cv::waitKey(27);
-
-            previous_imLeft = imLeft;
-            previous_imRight = imRight;
-            // release uint8_t buffers
-            free(left_img_data);
-            free(right_img_data);
-
-            // catch image read errors here
-        } catch (...) {
-            cerr << "ERROR: Couldn't read input files!" << endl;
-            return 1;
         }
+
+        // status
+        cout << "Processing: Frame: " << i;
+
+        Mat imLeft(height,width,CV_8UC1,left_img_data);
+        Mat imRight(imLeft.size(), CV_8UC1, right_img_data);
+
+
+
+
+
+
+        // compute visual odometry
+        int32_t dims[] = {width,height,width};
+        if (viso.process(left_img_data,right_img_data,dims)) {
+
+            imshow("current",imLeft);
+
+            /*plot the right matchs add by zhong*/
+            if(i > 3)
+            {
+                std::vector<Matcher::p_match> featureMatchs = viso.getMatches();
+                //                    Mat currentFrame = drawFeatureMatches(imLeft,imRight,featureMatchs,0);
+                //                    Mat previousFrame = drawFeatureMatches(previous_imLeft,previous_imLeft,featureMatchs,1);
+                //                    imshow("currentFrame",currentFrame);
+                //                    imshow("previousFrame",previousFrame);
+
+                Mat output = drawCircularMatches(imLeft,imRight,previous_imLeft,previous_imRight,featureMatchs);
+                imshow("output",output);
+
+            }
+
+
+
+            // on success, update current pose
+            pose = pose * Matrix::inv(viso.getMotion());
+
+            // output some statistics
+            double num_matches = viso.getNumberOfMatches();
+            double num_inliers = viso.getNumberOfInliers();
+            cout << ", Matches: " << num_matches;
+            cout << ", Inliers: " << 100.0*num_inliers/num_matches << " %" << ", Current pose: " << endl;
+            cout << pose << endl << endl;
+            for(int i = 0; i <3; i++)
+            {
+                for(int j = 0; j < 4; j++ )
+                {
+                    if(i ==2 && j==3)
+                        outFile << pose.val[i][j];
+                    else
+                        outFile << pose.val[i][j] << " ";
+                }
+            }
+            outFile << endl;
+
+
+        } else {
+            cout << " ... failed!" << endl;
+        }
+
+        previous_imLeft = imLeft.clone();
+        previous_imRight = imRight.clone();
+
+        waitKey(27);
+
+        // release uint8_t buffers
+        free(left_img_data);
+        free(right_img_data);
+
+        // catch image read errors here
+
     }
 
     // output
     cout << "Demo complete! Exiting ..." << endl;
+    cout << BOLDBLUE"All Done!" << endl;
+    outFile.close();
 
     // exit
     return 0;
@@ -297,7 +330,7 @@ Mat drawCircularMatches(Mat currImLeft, Mat currImRight, Mat lastImLeft, Mat las
     cv::cvtColor(lastImLeft,lastImLeft,CV_GRAY2BGR);
     cv::cvtColor(lastImRight,lastImRight,CV_GRAY2BGR);
     Mat output = Mat::zeros(currImLeft.rows * 2, currImLeft.cols * 2, currImLeft.type());
-    vector < vector<Point2i> > position;
+
 
     int cols = currImLeft.cols;
     int rows = currImLeft.rows;
@@ -317,6 +350,15 @@ Mat drawCircularMatches(Mat currImLeft, Mat currImRight, Mat lastImLeft, Mat las
         const int &v1p = Matcher::p_match(featureMatches[i]).v1p + rows;
         const int &u2p = Matcher::p_match(featureMatches[i]).u2p + cols;
         const int &v2p = Matcher::p_match(featureMatches[i]).v2p + rows;
+
+        /*feature id*/
+
+        const int &i1c = Matcher::p_match(featureMatches[i]).i1c;
+        const int &i2c = Matcher::p_match(featureMatches[i]).i2c;
+        const int &i1p = Matcher::p_match(featureMatches[i]).i1p;
+        const int &i2p = Matcher::p_match(featureMatches[i]).i2p;
+
+
 
         Point2i pt1_center,pt2_center,pt3_center,pt4_center;
         pt1_center.x = u1c;
@@ -338,6 +380,17 @@ Mat drawCircularMatches(Mat currImLeft, Mat currImRight, Mat lastImLeft, Mat las
         cv::line(output,pt3_center,pt4_center,Scalar(0,255,0),1,8);
         cv::line(output,pt4_center,pt2_center,Scalar(0,0,255),1,8);
         cv::line(output,pt2_center,pt1_center,Scalar(255,0,0),1,8);
+
+        /*show the id in the image*/
+
+        stringstream ss1;
+        ss1 << i1c;
+        cv::putText(output, ss1.str(), pt1_center, cv::FONT_HERSHEY_PLAIN,1,Scalar(0,255,0));
+
+        stringstream ss2;
+        ss2 << i1p;
+        cv::putText(output, ss2.str(), pt3_center, cv::FONT_HERSHEY_PLAIN,1,Scalar(0,0,255));
+
 
 
     }
