@@ -280,8 +280,7 @@ int Optimizer::PoseOptimization(Frame *pFrame)
     {
     unique_lock<mutex> lock(MapPoint::mGlobalMutex);
     /*add by zhong*/
-//    cout << "In frame: " << pFrame->mnId << ", PoseOptimization is worked!" \
-//         << endl << "And it will perform 4 optimizations. Here we show the times of each optimization:" << endl;
+
 
     for(int i=0; i<N; i++)
     {

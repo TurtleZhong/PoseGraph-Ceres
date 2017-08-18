@@ -143,9 +143,15 @@ void Viewer::Run()
 
         if(Frame2FrameShowFlag > 3)
         {
-            cv::Mat im2 = mpFrameDrawer->DrawFrameMatch();
-            cout << "im2.size = " << im2.cols << " " << im2.rows << endl;
-           cv::imshow("ORB-SLAM2: Frame to Frame Match", im2 );
+//            cv::Mat im2 = mpFrameDrawer->DrawFrameMatch();
+//            cout << "im2.size = " << im2.cols << " " << im2.rows << endl;
+//            //cv::imshow("ORB-SLAM2: Frame to Frame Match", im2 );
+
+//            cv::Mat im3 = mpFrameDrawer->DrawReprojectionError();
+//            cv::imshow("Reprojection error!",im3);
+            vector<Mat> imageToShow = mpFrameDrawer->DrawReprojectionError();
+            cv::imshow("Reprojection Error!", imageToShow[0]);
+
         }
 
 

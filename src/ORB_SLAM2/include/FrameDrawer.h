@@ -56,6 +56,13 @@ public:
     void UpdateFrame2Frame(Tracking *pTracker);
     cv::Mat DrawFrameMatch();
 
+    /*add by zhong 用于显示两帧与两帧之间的R，t，和ground truth的R，t的差距;同时显示matchs的匹配对*/
+    vector<cv::Mat> DrawReprojectionError();
+    /*pixel to camera*/
+    cv::Mat pixel2Camera(const int u, const int v, const float depth);
+
+    /*camera to pixel*/
+    Point2f camera2Pixel(cv::Mat &x3D);
 
     // Draw last processed frame.
     /*edit it cuz we need to test some functions origin:cv::Mat DrawFrame();*/
@@ -71,6 +78,11 @@ public:
 
     Frame mLastFrame;
     map<int,int> mMatchsId;
+
+    /*add by zhong 2017.08.17*/
+
+
+
 
 protected:
 

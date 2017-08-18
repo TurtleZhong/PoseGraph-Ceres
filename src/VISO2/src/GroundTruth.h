@@ -3,19 +3,18 @@
 
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <string>
 #include <cstdlib>
 #include <stdio.h>
 #include <stdlib.h>
-#include <fstream>
+
 
 using namespace std;
 using namespace cv;
 
-
-namespace ORB_SLAM2 {
 
 class GroundTruth
 {
@@ -36,7 +35,6 @@ public:
 
 };
 
-}
 
 
 

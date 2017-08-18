@@ -99,7 +99,7 @@ std::vector<Mat> FrameDrawer::DrawFrame()
                 cv::line(im1,vIniKeys[i].pt,vCurrentKeys[vMatches[i]].pt,
                         cv::Scalar(0,255,0));
             }
-        }        
+        }
     }
     else if(state==Tracking::OK) //TRACKING
     {
@@ -155,7 +155,7 @@ std::vector<Mat> FrameDrawer::DrawFrame()
                         }
                         MapPoint* mp = vMapPoints[i];
                         cv:: Mat tmp = mp->GetWorldPos();
-//                        cv:: Mat tmp = (mCurrentFrame.mvpMapPoints[i])->GetWorldPos();
+                        //                        cv:: Mat tmp = (mCurrentFrame.mvpMapPoints[i])->GetWorldPos();
 
                         //Mat tmp = Mat::ones(3,1,CV_32FC1);
                         P_w.at<double>(0) = (double)tmp.at<float>(0);
@@ -176,9 +176,9 @@ std::vector<Mat> FrameDrawer::DrawFrame()
 
                             if(p.x > minX && p.x < maxX && p.y > minY && p.y < maxY)
                             {
-//                                cv::rectangle(im,pt3,pt4,cv::Scalar(255,0,0));
-//                                cv::circle(im,p,2,cv::Scalar(255,0,0),-1);
-//                                cv::line(im,p,vCurrentKeys[i].pt,Scalar(0,0,255));
+                                //                                cv::rectangle(im,pt3,pt4,cv::Scalar(255,0,0));
+                                //                                cv::circle(im,p,2,cv::Scalar(255,0,0),-1);
+                                //                                cv::line(im,p,vCurrentKeys[i].pt,Scalar(0,0,255));
                             }
                         }
 
@@ -208,8 +208,8 @@ std::vector<Mat> FrameDrawer::DrawFrame()
         string tmp;
         ss >> tmp;
         string filename = "/home/m/ws_orb2/src/ORB_SLAM2/Compare/" + tmp + ".png";
-//        cout << "filename = " << filename << endl;
-//        cout << "frameID = " << mCurrentFrame.mnId << endl;
+        //        cout << "filename = " << filename << endl;
+        //        cout << "frameID = " << mCurrentFrame.mnId << endl;
         //imwrite(filename,im);
         //cout << GREEN"write frame suscess!" << endl;
     }
@@ -272,11 +272,11 @@ cv::Mat FrameDrawer::DrawFrameMatch()
         pt4.y=vLastKeys[last_id].pt.y+r;
 
 
-        cv::rectangle(curr_Im,pt1,pt2,cv::Scalar(255,0,0));
-        cv::circle(curr_Im,vCurrentKeys[curr_id].pt,2,cv::Scalar(255,0,0),-1);
+        //cv::rectangle(curr_Im,pt1,pt2,cv::Scalar(255,0,0));
+        cv::circle(curr_Im,vCurrentKeys[curr_id].pt,2,cv::Scalar(0,255,0),-1);
 
-        cv::rectangle(last_Im,pt3,pt4,cv::Scalar(0,255,0));
-        cv::circle(last_Im,vLastKeys[last_id].pt,2,cv::Scalar(0,255,0),-1);
+        //cv::rectangle(last_Im,pt3,pt4,cv::Scalar(0,255,0));
+        cv::circle(last_Im,vLastKeys[last_id].pt,2,cv::Scalar(255,0,0),-1);
 
 
     }
@@ -304,20 +304,219 @@ cv::Mat FrameDrawer::DrawFrameMatch()
 
 
     }
-    cv::resize(imMatch,imMatch,cv::Size(),0.5,0.5);
+
     stringstream ss;
     ss << mCurrentFrame.mnId;
     string tmp;
     ss >> tmp;
     string filename = "/home/m/ws_orb2/src/ORB_SLAM2/Matches/" + tmp + ".png";
     imwrite(filename, imMatch);
-    cout << "write " << tmp << " suscessfully!" << endl;
-
-
-
+    cout << BOLDCYAN"write " << tmp << " suscessfully!" << endl;
+    cv::resize(imMatch,imMatch,cv::Size(),0.5,0.5);
 
 
     return imMatch;
+}
+
+vector<Mat> FrameDrawer::DrawReprojectionError()
+{
+    /*for matches*/
+    cv::Mat imMatch = Mat::zeros(mIm.rows*2,mIm.cols,CV_8UC3);
+
+
+    cv::Mat imReprojection = Mat::zeros(mIm.rows*2,mIm.cols,CV_8UC3);
+    vector<cv::KeyPoint> vCurrentKeys = mCurrentFrame.mvKeys;
+    vector<cv::KeyPoint> vLastKeys    = mLastFrame.mvKeys;
+    vector<float> vDepth = mLastFrame.mvDepth; /*depth of last frame*/
+    int lastFrameId = mLastFrame.mnId;
+    int currFrameId = mCurrentFrame.mnId;
+
+    cv::Mat Tlw = mLastFrame.mTcw;
+    cv::Mat Tcw = mCurrentFrame.mTcw;
+
+    cv::Mat Tcl = Tcw * Tlw.inv();
+    cv::Mat Rcl = Tcl.rowRange(0,3).colRange(0,3);
+    cv::Mat tcl = Tcl.rowRange(0,3).col(3);
+
+    /*now we need to load the grodund truth poses to reproject the point*/
+    cv::Mat Twl_gd = gd.getFrameTwc(lastFrameId);
+    cv::Mat Tcw_gd = gd.getFrameTwc(currFrameId).inv();
+    cv::Mat Tcl_gd = Tcw_gd * Twl_gd;
+    cv::Mat Rcl_gd = Tcl_gd.rowRange(0,3).colRange(0,3);
+    cv::Mat tcl_gd = Tcl_gd.rowRange(0,3).col(3);
+
+
+    Rcl_gd.convertTo(Rcl_gd,CV_32FC1);
+    tcl_gd.convertTo(tcl_gd,CV_32FC1);
+
+
+    cv::Mat curr_Im, last_Im, curr_Im_match, last_Im_match;
+
+
+
+    mcurr_Im.copyTo(curr_Im);
+    mlast_Im.copyTo(last_Im);
+
+    if(curr_Im.channels()<3) //this should be always true
+    {
+        cvtColor(curr_Im,curr_Im,CV_GRAY2BGR);
+
+    }
+
+    if(last_Im.channels()<3) //this should be always true
+    {
+        cvtColor(last_Im,last_Im,CV_GRAY2BGR);
+
+    }
+
+    curr_Im.copyTo(curr_Im_match);
+    last_Im.copyTo(last_Im_match);
+
+    /*matches*/
+    map<int,int> matches = mMatchsId;
+    const float r = 5;
+
+    for(map<int,int>::iterator matches_iter = matches.begin(); matches_iter!=matches.end();matches_iter++)
+    {
+
+        int curr_id = matches_iter->first;
+        int last_id = matches_iter->second;
+        /* since we got the id, we can get the mappoints from last image
+         * and we need to reproject it
+         */
+
+        /*part2: draw the match*/
+        //cv::rectangle(curr_Im,pt1,pt2,cv::Scalar(255,0,0));
+        cv::circle(curr_Im_match,vCurrentKeys[curr_id].pt,1,cv::Scalar(0,255,0),-1);
+
+        //cv::rectangle(last_Im,pt3,pt4,cv::Scalar(0,255,0));
+        cv::circle(last_Im_match,vLastKeys[last_id].pt,1,cv::Scalar(255,0,0),-1);
+
+        int      u = vLastKeys[last_id].pt.x;
+        int      v = vLastKeys[last_id].pt.y;
+
+
+        float depth = vDepth[last_id];
+
+        cv::Mat x3Dl = pixel2Camera(u, v, depth);
+        /*ground truth*/
+        cv::Mat x3Dl_gd = pixel2Camera(u,v,depth);
+
+
+
+        /*now we got the 3D point in last frame*/
+        /*next we need to get the Tcl. c-->current frame   l--> lastframe*/
+
+        /*before we show it we need to check weather the x3Dl is empty*/
+        if(!x3Dl.empty() && !x3Dl_gd.empty())
+        {
+            cv::Mat x3Dc = Rcl * x3Dl + tcl;
+            cv::Mat x3Dc_gd = Rcl_gd * x3Dl_gd + tcl_gd;
+
+            /*OK, let's reproject this point*/
+
+            Point2f pixel = camera2Pixel(x3Dc);
+            Point2f pixel_gd = camera2Pixel(x3Dc_gd);
+
+            /*now we have reproject the point which in last frame to the current frame*/
+
+            /*let's show it and draw a line between the current match features*/
+
+            cv::circle(curr_Im,pixel,1,cv::Scalar(255,0,0),-1);
+            cv::circle(curr_Im,pixel_gd,1,cv::Scalar(0,0,255),-1);
+
+            cv::line(curr_Im,vCurrentKeys[curr_id].pt, pixel, Scalar(255,0,0),1);
+            cv::line(curr_Im,vCurrentKeys[curr_id].pt, pixel_gd, Scalar(0,0,255),1);
+        }
+
+
+
+
+
+
+
+        /*draw the current frame, the first value*/
+        cv::Point2f pt1,pt2,pt3,pt4;
+        pt1.x=vCurrentKeys[curr_id].pt.x-r;
+        pt1.y=vCurrentKeys[curr_id].pt.y-r;
+        pt2.x=vCurrentKeys[curr_id].pt.x+r;
+        pt2.y=vCurrentKeys[curr_id].pt.y+r;
+
+        pt3.x=vLastKeys[last_id].pt.x-r;
+        pt3.y=vLastKeys[last_id].pt.y-r;
+        pt4.x=vLastKeys[last_id].pt.x+r;
+        pt4.y=vLastKeys[last_id].pt.y+r;
+
+
+
+
+        //cv::rectangle(curr_Im,pt1,pt2,cv::Scalar(255,0,0));
+        cv::circle(curr_Im,vCurrentKeys[curr_id].pt,1,cv::Scalar(0,255,0),-1);
+
+
+        //cv::rectangle(last_Im,pt3,pt4,cv::Scalar(255,0,0));
+        cv::circle(last_Im,vLastKeys[last_id].pt,1,cv::Scalar(255,0,0),-1);
+
+        /*show the depth*/
+        stringstream s;
+        s << depth;
+        cv::putText(last_Im, s.str(), vLastKeys[last_id].pt, cv::FONT_HERSHEY_PLAIN,0.5,cv::Scalar(255,255,255),1,8 );
+
+
+    }
+
+    curr_Im_match.copyTo(imMatch(cv::Rect(0,0,curr_Im_match.cols,curr_Im_match.rows)));
+    last_Im_match.copyTo(imMatch(cv::Rect(0,curr_Im_match.rows,curr_Im_match.cols,curr_Im_match.rows)));
+    /*prat2:now we need to draw the lines*/
+    /*now we need to draw the lines*/
+
+    for(map<int,int>::iterator matches_iter = matches.begin(); matches_iter!=matches.end();matches_iter++)
+    {
+
+        int curr_id = matches_iter->first;
+        int last_id = matches_iter->second;
+        /*draw the current frame, the first value*/
+        cv::Point2f pt_curr,pt_last;
+
+        pt_curr = vCurrentKeys[curr_id].pt;
+        pt_last.x = vLastKeys[last_id].pt.x;
+        pt_last.y = vLastKeys[last_id].pt.y + curr_Im.rows;
+
+
+        cv::line(imMatch, pt_curr, pt_last, cv::Scalar(0,0,255),1,8);
+
+
+    }
+
+
+
+
+    curr_Im.copyTo(imReprojection(cv::Rect(0,0,curr_Im.cols,curr_Im.rows)));
+    last_Im.copyTo(imReprojection(cv::Rect(0,curr_Im.rows,curr_Im.cols,curr_Im.rows)));
+
+
+    stringstream ss1;
+    ss1 << currFrameId;
+    string tmp;
+    ss1 >> tmp;
+    string matchsName = "/home/m/ws_orb2/src/ORB_SLAM2/Matches/" + tmp + ".png";
+    imwrite(matchsName, imMatch);
+    cout << BOLDCYAN"write " << tmp << " suscessfully!" << endl;
+
+    //resize(imReprojection,imReprojection,Size(),0.7,0.8);
+//    stringstream ss;
+//    ss << currFrameId;
+
+    string filename = "/home/m/ws_orb2/src/ORB_SLAM2/Reprojection/" + tmp + ".png";
+    imwrite(filename,imReprojection);
+
+    vector<Mat> output;
+    output.push_back(imReprojection);
+    output.push_back(imMatch);
+
+    return output;
+
+
 }
 
 /*add by zhong*/
@@ -329,15 +528,15 @@ void FrameDrawer::drawOriginfeatures(cv::Mat &im1)
     const int n = vCurrentKeys.size();
     for(int i=0;i<n;i++)
     {
-            cv::Point2f pt1,pt2;
-            pt1.x=vCurrentKeys[i].pt.x-r;
-            pt1.y=vCurrentKeys[i].pt.y-r;
-            pt2.x=vCurrentKeys[i].pt.x+r;
-            pt2.y=vCurrentKeys[i].pt.y+r;
+        cv::Point2f pt1,pt2;
+        pt1.x=vCurrentKeys[i].pt.x-r;
+        pt1.y=vCurrentKeys[i].pt.y-r;
+        pt2.x=vCurrentKeys[i].pt.x+r;
+        pt2.y=vCurrentKeys[i].pt.y+r;
 
-            // This is a match to a MapPoint in the map
-            cv::rectangle(im1,pt1,pt2,cv::Scalar(0,0,255));
-            cv::circle(im1,vCurrentKeys[i].pt,2,cv::Scalar(0,0,255),-1);
+        // This is a match to a MapPoint in the map
+        cv::rectangle(im1,pt1,pt2,cv::Scalar(0,0,255));
+        cv::circle(im1,vCurrentKeys[i].pt,2,cv::Scalar(0,0,255),-1);
     }
 }
 
@@ -362,7 +561,7 @@ void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText, int fla
         }
         else if (flag == 1)
         {
-           s << "KFs: " << nKFs << ", MPs: " << nMPs << ", Features: " << mvCurrentKeys.size() << " | ID: " << mCurrentFrame.mnId;
+            s << "KFs: " << nKFs << ", MPs: " << nMPs << ", Features: " << mvCurrentKeys.size() << " | ID: " << mCurrentFrame.mnId;
         }
 
         if(mnTrackedVO>0)
@@ -438,13 +637,54 @@ void FrameDrawer::UpdateFrame2Frame(Tracking *pTracker)
     mLastFrame = pTracker->getLastFrame();
     mCurrentFrame = pTracker->mCurrentFrame;
     if(mCurrentFrame.mnId > 5)
-    cout << RED << pTracker->mCurrentFrame.matchesId.size() << endl;
+        cout << RED << pTracker->mCurrentFrame.matchesId.size() << endl;
     //cout << "Current frame id is: " << mCurrentFrame.mnId << endl;
     mMatchsId = pTracker->mCurrentFrame.matchesId;
 
     mState=static_cast<int>(pTracker->mLastProcessedState);
 }
 
+cv::Mat FrameDrawer::pixel2Camera(const int u, const int v, const float depth)
+{
+    const float z = depth;
+    const float cx = mCurrentFrame.cx;
+    const float cy = mCurrentFrame.cy;
+    const float invfx = mCurrentFrame.invfx;
+    const float invfy = mCurrentFrame.invfy;
+    if(z>0)
+    {
+        const double x = (u-cx)*z*invfx;
+        const double y = (v-cy)*z*invfy;
+
+        cv::Mat x3D = (cv::Mat_<float>(3,1) << x, y, z);
+        return x3D;
+    }
+    else
+        return cv::Mat();
+}
+
+cv::Point2f FrameDrawer::camera2Pixel(Mat &x3D)
+{
+    float x = x3D.at<float>(0,0);
+    float y = x3D.at<float>(1,0);
+    float z = x3D.at<float>(2,0);
+
+    const float cx = mCurrentFrame.cx;
+    const float cy = mCurrentFrame.cy;
+    const float fx = mCurrentFrame.fx;
+    const float fy = mCurrentFrame.fy;
+
+    if(z>0)
+    {
+        Point2f pixel;
+        pixel.x = fx * (x/z) + cx;
+        pixel.y = fy * (y/z) + cy;
+        return pixel;
+    }
+    else
+        return Point2f();
+
+}
 
 
 

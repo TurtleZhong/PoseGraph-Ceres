@@ -1,6 +1,5 @@
 #include "GroundTruth.h"
-
-namespace ORB_SLAM2 {
+#include <fstream>
 
 GroundTruth::GroundTruth()
 {
@@ -10,11 +9,11 @@ GroundTruth::GroundTruth()
 
 void GroundTruth::loadPoses()
 {
-    //this->sequenceDir = "/home/m/KITTI/poses/00.txt";
-    this->sequenceDir = "/home/m/KITTI/devkit/cpp/results/ORB/data/11.txt";
+    this->sequenceDir = "/home/m/KITTI/poses/00.txt";
+    //this->sequenceDir = "/home/m/KITTI/devkit/cpp/results/ORB/data/11.txt";
     //
     fstream inFile;
-    inFile.open(sequenceDir);
+    inFile.open(sequenceDir.c_str());
     int count = 0;
     while(inFile.good())
     {
@@ -93,6 +92,4 @@ Mat GroundTruth::getFrametcw(int frameID)
 
     else
         return Mat();
-}
-
 }

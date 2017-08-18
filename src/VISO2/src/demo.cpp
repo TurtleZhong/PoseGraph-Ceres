@@ -37,6 +37,7 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #include <map>
 #include <fstream>
 #include <sstream>
+#include "GroundTruth.h"
 
 #define BOLDBLUE "\033[1m\033[34m" /* Bold Blue */
 
@@ -45,6 +46,9 @@ using namespace cv;
 
 Mat drawFeatureMatches(Mat imLeft, Mat imRight, std::vector<Matcher::p_match> featureMatches, int flag);
 Mat drawCircularMatches(Mat currImLeft, Mat currImRight, Mat lastImLeft, Mat lastImRight, std::vector<Matcher::p_match> featureMatches);
+Mat drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Matcher::p_match> featureMatches, Matrix &T, int id);
+cv::Mat pixel2Camera(const int u, const int v, const float depth);
+cv::Point2f camera2Pixel(Mat &x3D);
 
 int main (int argc, char** argv) {
 
@@ -85,7 +89,7 @@ int main (int argc, char** argv) {
     outFile.open("../camera_poses.txt");
     
     // loop through all frames i=0:372
-    for (int32_t i=0; i<4660; i++) {
+    for (int32_t i=0; i<4540; i++) {
 
         // input file names
         char base_name[256];
@@ -140,8 +144,16 @@ int main (int argc, char** argv) {
 
             imshow("current",imLeft);
 
+
+
+
+            Matrix Tcl = viso.getMotion();
+            cout << "Tcl = " << endl <<  Tcl << endl;
+            // on success, update current pose
+            pose = pose * Matrix::inv(viso.getMotion());
+
             /*plot the right matchs add by zhong*/
-            if(i > 3)
+            if(i > 5)
             {
                 std::vector<Matcher::p_match> featureMatchs = viso.getMatches();
                 //                    Mat currentFrame = drawFeatureMatches(imLeft,imRight,featureMatchs,0);
@@ -149,15 +161,13 @@ int main (int argc, char** argv) {
                 //                    imshow("currentFrame",currentFrame);
                 //                    imshow("previousFrame",previousFrame);
 
-                Mat output = drawCircularMatches(imLeft,imRight,previous_imLeft,previous_imRight,featureMatchs);
+                //Mat output = drawCircularMatches(imLeft,imRight,previous_imLeft,previous_imRight,featureMatchs);
+                Mat output = drawReprojectionError(imLeft,previous_imLeft,featureMatchs,Tcl,i);
                 imshow("output",output);
+                //waitKey(0);
 
             }
 
-
-
-            // on success, update current pose
-            pose = pose * Matrix::inv(viso.getMotion());
 
             // output some statistics
             double num_matches = viso.getNumberOfMatches();
@@ -185,7 +195,7 @@ int main (int argc, char** argv) {
         previous_imLeft = imLeft.clone();
         previous_imRight = imRight.clone();
 
-        waitKey(27);
+        waitKey(30);
 
         // release uint8_t buffers
         free(left_img_data);
@@ -404,6 +414,171 @@ Mat drawCircularMatches(Mat currImLeft, Mat currImRight, Mat lastImLeft, Mat las
 
 }
 
+
+Mat drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Matcher::p_match> featureMatches, Matrix &T, int id)
+{
+    /*task1: draw the previous and current frame's matches*/
+    /*task2: draw the reprojection error*/
+    /*Now we got the Rotation matrix*/
+
+    GroundTruth gd;
+    /*now we need to load the grodund truth poses to reproject the point*/
+    cv::Mat Twl_gd = gd.getFrameTwc(id - 1);
+    cv::Mat Tcw_gd = gd.getFrameTwc(id).inv();
+    cv::Mat Tcl_gd = Tcw_gd * Twl_gd;
+    cv::Mat Rcl_gd = Tcl_gd.rowRange(0,3).colRange(0,3);
+    cv::Mat tcl_gd = Tcl_gd.rowRange(0,3).col(3);
+
+
+    Rcl_gd.convertTo(Rcl_gd,CV_32FC1);
+    tcl_gd.convertTo(tcl_gd,CV_32FC1);
+
+
+    double f  = 718.856; // focal length in pixels
+    double cx = 607.1928; // principal point (u-coordinate) in pixels
+    double cy = 185.2157; // principal point (v-coordinate) in pixels
+    double base     = 0.5372; // baseline in meters
+
+    cv::Mat Tcl = cv::Mat::eye(4,4,CV_64FC1);
+    for(int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            Tcl.at<double>(i,j) = T.val[i][j];
+        }
+    }
+    cv::Mat Rcl = Tcl.rowRange(0,3).colRange(0,3);
+    cv::Mat tcl = Tcl.rowRange(0,3).col(3);
+    Rcl.convertTo(Rcl,CV_32FC1);
+    tcl.convertTo(tcl,CV_32FC1);
+
+
+
+
+    cv::cvtColor(currImLeft,currImLeft,CV_GRAY2BGR);
+    cv::cvtColor(lastImLeft,lastImLeft,CV_GRAY2BGR);
+    Mat outputMatches = Mat::zeros(currImLeft.rows * 2 , currImLeft.cols, CV_8UC3);
+    vector < vector<Point2f> > position;
+
+
+
+
+    for (int i = 0; i < featureMatches.size(); i++)
+    {
+        const float &u1c = Matcher::p_match(featureMatches[i]).u1c;
+        const float &v1c = Matcher::p_match(featureMatches[i]).v1c;
+        const float &u1p = Matcher::p_match(featureMatches[i]).u1p;
+        const float &v1p = Matcher::p_match(featureMatches[i]).v1p;
+
+        const float &u2p = Matcher::p_match(featureMatches[i]).u2p;
+
+        double d = max(u1p - u2p,0.0001f);
+
+        float depth = (f * base) / d;
+
+        if(depth > 0)
+        {
+
+            cv::Mat x3Dl = pixel2Camera(u1p, v1p, depth);
+            cv::Mat x3Dl_gd = pixel2Camera(u1p, v1p, depth);
+            if(!x3Dl.empty() && !x3Dl_gd.empty())
+            {
+                cv::Mat x3Dc = Rcl * x3Dl + tcl;
+                cv::Mat x3Dc_gd = Rcl_gd * x3Dl_gd + tcl_gd;
+                Point2f pixel = camera2Pixel(x3Dc);
+                Point2f pixel_gd = camera2Pixel(x3Dc_gd);
+                //cv::circle(currImLeft,pixel,1,Scalar(255,0,0),-1);
+                cv::circle(currImLeft,pixel_gd,1,Scalar(255,0,0),-1);
+
+            }
+
+
+        }
+
+
+
+        Point2f pt1_center,pt2_center;
+        pt1_center.x = u1c;
+        pt1_center.y = v1c;
+        pt2_center.x = u1p;
+        pt2_center.y = v1p;
+
+        vector<Point2f> tmp;
+
+        tmp.push_back(pt1_center);
+        tmp.push_back(pt2_center);
+
+        position.push_back(tmp);
+
+
+        cv::circle(currImLeft,pt1_center,1,Scalar(0,255,0),-1);
+        cv::circle(lastImLeft,pt2_center,1,Scalar(255,0,0),-1);
+
+
+    }
+
+
+
+
+    currImLeft.copyTo(outputMatches(cv::Rect(0,0,currImLeft.cols,currImLeft.rows)));
+    lastImLeft.copyTo(outputMatches(cv::Rect(0,lastImLeft.rows,lastImLeft.cols,lastImLeft.rows)));
+
+
+    for(vector < vector<Point2f> >::iterator iter = position.begin(); iter!=position.end();iter++)
+    {
+        vector<Point2f> pos = *iter;
+        Point2f pt1 = pos[0];
+        Point2f pt2 = pos[1];
+        //cv::line(outputMatches,pt1,Point2f(pt2.x, pt2.y + currImLeft.rows),Scalar(0,0,255),1,8);
+    }
+
+    return outputMatches;
+
+}
+
+cv::Mat pixel2Camera(const int u, const int v, const float depth)
+{
+    VisualOdometryStereo::parameters param;
+    const float z = depth;
+    const float cx = param.calib.cu;
+    const float cy = param.calib.cv;
+    const float invfx = 1.0 / param.calib.f;
+    const float invfy = 1.0 / param.calib.f;
+    if(z>0)
+    {
+        const double x = (u-cx)*z*invfx;
+        const double y = (v-cy)*z*invfy;
+
+        cv::Mat x3D = (cv::Mat_<float>(3,1) << x, y, z);
+        return x3D;
+    }
+    else
+        return cv::Mat();
+}
+
+cv::Point2f camera2Pixel(Mat &x3D)
+{
+    VisualOdometryStereo::parameters param;
+    float x = x3D.at<float>(0,0);
+    float y = x3D.at<float>(1,0);
+    float z = x3D.at<float>(2,0);
+
+    const float cx = param.calib.cu;
+    const float cy = param.calib.cv;
+    const float fx = param.calib.f;
+    const float fy = param.calib.f;
+
+    if(z>0)
+    {
+        Point2f pixel;
+        pixel.x = fx * (x/z) + cx;
+        pixel.y = fy * (y/z) + cy;
+        return pixel;
+    }
+    else
+        return Point2f();
+
+}
 
 
 

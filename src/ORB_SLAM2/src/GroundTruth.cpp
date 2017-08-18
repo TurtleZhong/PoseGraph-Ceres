@@ -10,8 +10,8 @@ GroundTruth::GroundTruth()
 
 void GroundTruth::loadPoses()
 {
-    //this->sequenceDir = "/home/m/KITTI/poses/00.txt";
-    this->sequenceDir = "/home/m/KITTI/devkit/cpp/results/ORB/data/11.txt";
+    this->sequenceDir = "/home/m/KITTI/poses/00.txt";
+    //this->sequenceDir = "/home/m/KITTI/devkit/cpp/results/ORB/data/11.txt";
     //
     fstream inFile;
     inFile.open(sequenceDir);
