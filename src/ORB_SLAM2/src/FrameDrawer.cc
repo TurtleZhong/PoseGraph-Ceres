@@ -349,6 +349,8 @@ vector<Mat> FrameDrawer::DrawReprojectionError()
     Rcl_gd.convertTo(Rcl_gd,CV_32FC1);
     tcl_gd.convertTo(tcl_gd,CV_32FC1);
 
+    cout << endl << BOLDMAGENTA"Tcl_gd = " << endl << Tcl_gd << endl;
+
 
     cv::Mat curr_Im, last_Im, curr_Im_match, last_Im_match;
 
@@ -431,10 +433,6 @@ vector<Mat> FrameDrawer::DrawReprojectionError()
 
 
 
-
-
-
-
         /*draw the current frame, the first value*/
         cv::Point2f pt1,pt2,pt3,pt4;
         pt1.x=vCurrentKeys[curr_id].pt.x-r;
@@ -500,7 +498,7 @@ vector<Mat> FrameDrawer::DrawReprojectionError()
     string tmp;
     ss1 >> tmp;
     string matchsName = "/home/m/ws_orb2/src/ORB_SLAM2/Matches/" + tmp + ".png";
-    imwrite(matchsName, imMatch);
+    //imwrite(matchsName, imMatch);
     cout << BOLDCYAN"write " << tmp << " suscessfully!" << endl;
 
     //resize(imReprojection,imReprojection,Size(),0.7,0.8);
@@ -508,7 +506,7 @@ vector<Mat> FrameDrawer::DrawReprojectionError()
 //    ss << currFrameId;
 
     string filename = "/home/m/ws_orb2/src/ORB_SLAM2/Reprojection/" + tmp + ".png";
-    imwrite(filename,imReprojection);
+    //imwrite(filename,imReprojection);
 
     vector<Mat> output;
     output.push_back(imReprojection);
