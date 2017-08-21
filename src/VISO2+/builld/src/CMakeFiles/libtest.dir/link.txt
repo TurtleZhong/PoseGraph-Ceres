@@ -1,0 +1,2 @@
+/usr/bin/ar qc ../../lib/liblibtest.a  CMakeFiles/libtest.dir/config.cpp.o CMakeFiles/libtest.dir/camera.cpp.o
+/usr/bin/ranlib ../../lib/liblibtest.a
