@@ -49,6 +49,7 @@ Mat drawCircularMatches(Mat currImLeft, Mat currImRight, Mat lastImLeft, Mat las
 vector<Mat> drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Matcher::p_match> featureMatches, Matrix &T, int id);
 cv::Mat pixel2Camera(const float u, const float v, const float depth);
 cv::Point2f camera2Pixel(Mat &x3D);
+uint8_t* toPng(const cv::Mat &image);
 
 int main (int argc, char** argv) {
 
@@ -122,10 +123,13 @@ int main (int argc, char** argv) {
         for (int32_t v=0; v<height; v++) {
             for (int32_t u=0; u<width; u++) {
                 left_img_data[k]  = left_img.get_pixel(u,v);
+
+                //cout << "left image data[" << k << "] = " << left_img.get_pixel(u,v) << endl;
                 right_img_data[k] = right_img.get_pixel(u,v);
                 k++;
             }
         }
+
 
         // status
         cout << "Processing: Frame: " << i;
@@ -133,6 +137,19 @@ int main (int argc, char** argv) {
         Mat imLeft(height,width,CV_8UC1,left_img_data);
         Mat imRight(imLeft.size(), CV_8UC1, right_img_data);
 
+//        uint8_t* left_image = new uint8_t[imLeft.rows*imLeft.cols];
+//        if(imLeft.isContinuous())
+//            left_image = imLeft.data;
+
+        uint8_t* left_image = toPng(imLeft);
+
+        uint8_t* right_image = new uint8_t[imLeft.rows*imLeft.cols];
+        if(imRight.isContinuous())
+            right_image = imRight.data;
+
+        cout << endl << "***" << left_image[0] << endl;
+
+        waitKey(0);
 
 
 
@@ -140,7 +157,7 @@ int main (int argc, char** argv) {
 
         // compute visual odometry
         int32_t dims[] = {width,height,width};
-        if (viso.process(left_img_data,right_img_data,dims)) {
+        if (viso.process(left_image,right_image,dims)) {
 
             imshow("current",imLeft);
 
@@ -163,7 +180,8 @@ int main (int argc, char** argv) {
 
                 //Mat output = drawCircularMatches(imLeft,imRight,previous_imLeft,previous_imRight,featureMatchs);
                 vector<Mat> output = drawReprojectionError(imLeft,previous_imLeft,featureMatchs,Tcl,i);
-                imshow("Reprojection Error!",output[0]);
+                //imshow("Reprojection Error!",output[0]);
+                resize(output[1],output[1],Size(),0.9,0.5);
                 imshow("Matches",output[1]);
 
             }
@@ -554,10 +572,10 @@ vector<Mat> drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Ma
     string tmp;
     ss1 >> tmp;
     string matchsName = "/home/m/ws_orb2/src/VISO2/Matches/" + tmp + ".png";
-    imwrite(matchsName, outputMatches);
+    //imwrite(matchsName, outputMatches);
 
     string filename = "/home/m/ws_orb2/src/VISO2/Reprojection/" + tmp + ".png";
-    imwrite(filename,outputReprojection);
+    //imwrite(filename,outputReprojection);
 
 
 
@@ -613,7 +631,16 @@ cv::Point2f camera2Pixel(Mat &x3D)
 }
 
 
+uint8_t* toPng(const cv::Mat &image)
+{
+    uint8_t* img_data = new uint8_t[image.rows*image.cols];
+    if(image.isContinuous())
+    {
+        img_data = image.data;
+    }
 
+    return img_data;
+}
 
 
 

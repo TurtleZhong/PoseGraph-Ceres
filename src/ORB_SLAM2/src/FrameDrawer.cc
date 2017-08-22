@@ -337,6 +337,7 @@ vector<Mat> FrameDrawer::DrawReprojectionError()
     cv::Mat Tcl = Tcw * Tlw.inv();
     cv::Mat Rcl = Tcl.rowRange(0,3).colRange(0,3);
     cv::Mat tcl = Tcl.rowRange(0,3).col(3);
+    //cv::normalize(tcl,tcl);
 
     /*now we need to load the grodund truth poses to reproject the point*/
     cv::Mat Twl_gd = gd.getFrameTwc(lastFrameId);
@@ -348,6 +349,7 @@ vector<Mat> FrameDrawer::DrawReprojectionError()
 
     Rcl_gd.convertTo(Rcl_gd,CV_32FC1);
     tcl_gd.convertTo(tcl_gd,CV_32FC1);
+    //cv::normalize(tcl_gd,tcl_gd);
 
     cout << endl << BOLDMAGENTA"Tcl_gd = " << endl << Tcl_gd << endl;
 
@@ -399,6 +401,7 @@ vector<Mat> FrameDrawer::DrawReprojectionError()
 
 
         float depth = vDepth[last_id];
+        //float depth = 1.0;
 
         cv::Mat x3Dl = pixel2Camera(u, v, depth);
         /*ground truth*/

@@ -54,16 +54,16 @@ public:
     
     // default settings
     parameters () {
-      nms_n                  = 3;
-      nms_tau                = 50;
-      match_binsize          = 50;
-      match_radius           = 200;
-      match_disp_tolerance   = 2;
-      outlier_disp_tolerance = 5;
-      outlier_flow_tolerance = 5;
-      multi_stage            = 1;
-      half_resolution        = 1;
-      refinement             = 1;
+      nms_n                  = 3;   //非极大值抑制的最小值
+      nms_tau                = 50;  //兴趣点峰值阈值
+      match_binsize          = 50;  //50 x 50 pixel
+      match_radius           = 200; //匹配半径
+      match_disp_tolerance   = 2;   //need < 2pixel
+      outlier_disp_tolerance = 5;   //if disp > 5, then it is an outlier!
+      outlier_flow_tolerance = 5;   //if flow > 5, then it is an outlier!
+      multi_stage            = 1;   //多步骤匹配
+      half_resolution        = 1;   //
+      refinement             = 1;   //精度1=pixel,2=subpixel
     }
   };
 

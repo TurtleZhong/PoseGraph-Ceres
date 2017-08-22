@@ -92,12 +92,13 @@ Matcher::~Matcher() {
   if (I2c_dv_full)  _mm_free(I2c_dv_full);
 }
 
-void Matcher::pushBack (uint8_t *I1,uint8_t* I2,int32_t* dims,const bool replace) {
+void Matcher::
+pushBack (uint8_t *I1,uint8_t* I2,int32_t* dims,const bool replace) {
 
   // image dimensions
   int32_t width  = dims[0];
   int32_t height = dims[1];
-  int32_t bpl    = dims[2];
+  int32_t bpl    = dims[2]; //byte per line
 
   // sanity check
   if (width<=0 || height<=0 || bpl<width || I1==0) {
@@ -152,9 +153,10 @@ void Matcher::pushBack (uint8_t *I1,uint8_t* I2,int32_t* dims,const bool replace
     dims_p[0]   = dims_c[0];
     dims_p[1]   = dims_c[1];
     dims_p[2]   = dims_c[2];
+    /*所有上一帧的数据等于这一帧的*/
   }
 
-  // set new dims (bytes per line must be multiple of 16)
+  // set new dims (bytes per line must be multiple of 16) 保证是16的倍数
   dims_c[0] = width;
   dims_c[1] = height;
   dims_c[2] = width + 15-(width-1)%16;
