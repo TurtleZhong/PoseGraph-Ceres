@@ -22,13 +22,14 @@
 #define CONVERTER_H
 
 #include<opencv2/core/core.hpp>
-
+#include<png++/png.hpp>
 #include<Eigen/Dense>
 #include"Thirdparty/g2o/g2o/types/types_six_dof_expmap.h"
 #include"Thirdparty/g2o/g2o/types/types_seven_dof_expmap.h"
+#include<sophus/so3.h>
+#include<sophus/se3.h>
 
-namespace myslam
-{
+
 
 class Converter
 {
@@ -50,8 +51,17 @@ public:
     static Eigen::Matrix<double,3,3> toMatrix3d(const cv::Mat &cvMat3);
 
     static std::vector<float> toQuaternion(const cv::Mat &M);
+
+    static uint8_t* toPng(const cv::Mat &image);
+
+    static Sophus::SE3 toSE3(const cv::Mat &cvT);
+
+
+
+
+
 };
 
-}// namespace myslam
+// namespace myslam
 
 #endif // CONVERTER_H

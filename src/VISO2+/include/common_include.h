@@ -26,6 +26,8 @@
 //#include <eigen3/Eigen/Core>
 //#include <eigen3/Eigen/Geometry>
 
+
+
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
@@ -52,6 +54,12 @@ using cv::Mat;
 #include <set>
 #include <unordered_map>
 #include <map>
+#include <stdint.h>
+
+#include <png++/png.hpp>
+
+#include "converter.h"
+
 
 using namespace std; 
 

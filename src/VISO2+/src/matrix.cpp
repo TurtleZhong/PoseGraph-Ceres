@@ -22,8 +22,8 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #include "matrix.h"
 #include <math.h>
 #include <algorithm>
-
 using namespace std;
+
 
 #define SWAP(a,b) {temp=a;a=b;b=temp;}
 #define SIGN(a,b) ((b) >= 0.0 ? fabs(a) : -fabs(a))

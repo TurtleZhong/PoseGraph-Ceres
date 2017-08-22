@@ -21,9 +21,6 @@
 
 #include "converter.h"
 
-namespace myslam
-{
-
 std::vector<cv::Mat> Converter::toDescriptorVector(const cv::Mat &Descriptors)
 {
     std::vector<cv::Mat> vDesc;
@@ -148,4 +145,27 @@ std::vector<float> Converter::toQuaternion(const cv::Mat &M)
     return v;
 }
 
-} //namespace ORB_SLAM
+uint8_t* Converter::toPng(const cv::Mat &image)
+{
+    uint8_t* img_data = new uint8_t[image.rows*image.cols];
+    if(image.isContinuous())
+    {
+        img_data = image.data;
+    }
+
+    return img_data;
+}
+
+Sophus::SE3 Converter::toSE3(const cv::Mat &cvT)
+{
+    Eigen::Matrix<double,3,3> R;
+    R << cvT.at<float>(0,0), cvT.at<float>(0,1), cvT.at<float>(0,2),
+         cvT.at<float>(1,0), cvT.at<float>(1,1), cvT.at<float>(1,2),
+         cvT.at<float>(2,0), cvT.at<float>(2,1), cvT.at<float>(2,2);
+
+    Eigen::Matrix<double,3,1> t(cvT.at<float>(0,3), cvT.at<float>(1,3), cvT.at<float>(2,3));
+    Sophus::SE3 SE3_Rt(R,t);
+
+    return SE3_Rt;
+}
+

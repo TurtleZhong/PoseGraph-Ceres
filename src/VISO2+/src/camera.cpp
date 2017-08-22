@@ -11,8 +11,6 @@
 #include "camera.h"
 #include "config.h"
 
-using namespace myslam;
-
 Camera::Camera()
 {
     fx_           = Config::get<float>("Camera.fx");

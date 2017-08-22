@@ -5,8 +5,6 @@
 #include "map.h"
 #include <opencv2/features2d/features2d.hpp>
 
-namespace myslam
-{
 class VisualOdometry
 {
 public:
@@ -77,8 +75,6 @@ protected:
 
 };
 
-
-}
 
 
 #endif // VISUAL_ODOMETRY_H

@@ -22,7 +22,6 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #include "matcher.h"
 #include "triangle.h"
 #include "filter.h"
-
 using namespace std;
 
 //////////////////////

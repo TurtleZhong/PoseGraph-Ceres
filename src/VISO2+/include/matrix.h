@@ -75,7 +75,7 @@ public:
 
   // clear matrix
   void zero();
-  
+
   // extract columns with given index
   Matrix extractCols (std::vector<int> idx);
 
@@ -85,7 +85,7 @@ public:
 
   // create diagonal matrix with nx1 or 1xn matrix M as elements
   static Matrix diag(const Matrix &M);
-  
+
   // returns the m-by-n matrix whose elements are taken column-wise from M
   static Matrix reshape(const Matrix &M,int32_t m,int32_t n);
 

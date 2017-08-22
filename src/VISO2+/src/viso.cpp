@@ -22,7 +22,6 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #include "viso.h"
 
 #include <math.h>
-
 using namespace std;
 
 VisualOdometry::VisualOdometry (parameters param) : param(param) {

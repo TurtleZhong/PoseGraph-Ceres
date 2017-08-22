@@ -102,7 +102,7 @@ public:
 
     // returns the number of inliers: num_inliers <= num_matched
     int32_t getNumberOfInliers () { return inliers.size(); }
-    
+
     // returns the indices of all inliers
     // 获得所有inliers的索引
     std::vector<int32_t> getInlierIndices () { return inliers; }

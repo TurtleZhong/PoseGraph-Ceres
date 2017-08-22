@@ -1,6 +1,5 @@
 #include "config.h"
 
-using namespace myslam;
 
 void Config::setParameterFile(const string &filename)
 {

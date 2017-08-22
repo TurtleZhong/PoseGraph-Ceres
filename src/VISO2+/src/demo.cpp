@@ -122,6 +122,7 @@ int main (int argc, char** argv) {
         for (int32_t v=0; v<height; v++) {
             for (int32_t u=0; u<width; u++) {
                 left_img_data[k]  = left_img.get_pixel(u,v);
+
                 right_img_data[k] = right_img.get_pixel(u,v);
                 k++;
             }

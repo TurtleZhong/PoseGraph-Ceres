@@ -1,16 +1,21 @@
 #include "frame.h"
 
-using namespace myslam;
-
-Frame::Frame() : id_(-1), time_stamp_(-1), camera_(nullptr)
+Frame::Frame() : id_(-1), camera_(nullptr)
 {
 
 }
 
-Frame::Frame(long id, double time_stamp, Sophus::SE3 T_c_w, Camera::Ptr camera, cv::Mat color, cv::Mat depth)
-    : id_(id), time_stamp_(time_stamp), T_c_w_(T_c_w), camera_(camera), color_(color), depth_(depth)
+Frame::Frame(long id, Camera::Ptr camera, cv::Mat imLeft, cv::Mat imRight)
+    : id_(id), camera_(camera), imLeft_(imLeft), imRight_(imRight)
 {
+    /*here we need to update the png data for viso to use*/
+    img_left_data = Converter::toPng(imLeft_);
+    img_right_data = Converter::toPng(imRight_);
+    this->dims[0] = this->imLeft_.cols;
+    this->dims[1] = this->imLeft_.rows;
+    this->dims[2] = this->imLeft_.cols;
 
+    /*May be we need to update something else but need to test*/
 }
 
 Frame::~Frame()
@@ -18,50 +23,37 @@ Frame::~Frame()
 
 }
 
-Frame::Ptr Frame::createFrame()
+//Frame::Ptr Frame::createFrame(long id, Camera::Ptr camera, Mat imLeft, Mat imRight)
+//{
+//    static long factory_id = 0;
+//    return Frame::Ptr (new Frame(factory_id++));
+//}
+
+std::vector<Matcher::p_match> Frame::getFeatureMatches()
 {
-    static long factory_id = 0;
-    return Frame::Ptr (new Frame(factory_id++));
+    return matches_;
 }
 
-double Frame::findDepth(const cv::KeyPoint &kp)
+void Frame::setPose(cv::Mat Tcw)
 {
-    int x = cvRound(kp.pt.x);
-    int y = cvRound(kp.pt.y);
-    ushort d = depth_.ptr<ushort>(y)[x]; /*get data from Mat()*/
-
-    if( d!= 0 )
-    {
-        return double(d) / camera_->depth_scale_; /*get depthscale by shared Ptr*/
-    }
-    else
-    {
-        /*check the nearby points
-         *            *
-         *          * kp *
-         *            *
-         */
-        int dx[4] = {-1, 0, 1, 0};
-        int dy[4] = {0, -1, 0, 1};
-        for (int i = 0; i < 4; i++)
-        {
-            d = depth_.ptr<ushort>( y+dy[i] )[ x+dx[i] ];
-
-            if( d!= 0 )
-            {
-                return double(d) / camera_->depth_scale_; /*get depthscale by shared Ptr*/
-            }
-        }
-    }
-
-    return -1;
+    /*here we need to update the SE3 but I have not test it yet*/
+    Tcw_ = Tcw.clone();
+    T_c_w_ = Converter::toSE3(Tcw_);
+    updatePoseMatrices();
 }
 
-
-Vector3d Frame::getCamCenter() const
+void Frame::updatePoseMatrices()
 {
-    return T_c_w_.inverse().translation(); /*X Y Z*/
+    // [x_camera 1] = [R|t]*[x_world 1]，坐标为齐次形式
+    // x_camera = R*x_world + t
+    Rcw_ = Tcw_.rowRange(0,3).colRange(0,3);
+    Rwc_ = Rcw_.t(); //旋转矩阵为正交矩阵，所以它的逆等于它的转置
+    tcw_ = Tcw_.rowRange(0,3).col(3);
+    // mtcw, 即相机坐标系下相机坐标系到世界坐标系间的向量, 向量方向由相机坐标系指向世界坐标系
+    // mOw, 即世界坐标系下世界坐标系到相机坐标系间的向量, 向量方向由世界坐标系指向相机坐标系
+    Ow_ = -Rcw_.t()*tcw_;
 }
+
 
 bool Frame::isInFrame(const Eigen::Vector3d &pt_world)
 {
@@ -72,6 +64,12 @@ bool Frame::isInFrame(const Eigen::Vector3d &pt_world)
     }
     Vector2d pixel = camera_->world2pixel(pt_world, T_c_w_);
     return pixel(0,0)>0 && pixel(1,0)>0
-        && pixel(0,0)<color_.cols
-        && pixel(1,0)<color_.rows;
+        && pixel(0,0)<imLeft_.cols
+        && pixel(1,0)<imLeft_.rows;
+}
+
+bool Frame::isInFrame(const cv::Mat &pt_world)
+{
+    Vector3d pt_w = Converter::toVector3d(pt_world);
+    return isInFrame(pt_w);
 }

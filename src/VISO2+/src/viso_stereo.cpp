@@ -20,7 +20,6 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 */
 
 #include "viso_stereo.h"
-
 using namespace std;
 
 VisualOdometryStereo::VisualOdometryStereo (parameters param) : param(param), VisualOdometry(param) {
