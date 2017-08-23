@@ -3,8 +3,6 @@
 
 #include "common_include.h"
 
-namespace myslam
-{
 
 class Frame;
 class MapPoint
@@ -47,7 +45,6 @@ public:
 
 };
 
-}
 
 
 #endif // MAPPOINT_H

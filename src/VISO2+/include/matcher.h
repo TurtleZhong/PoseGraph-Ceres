@@ -30,8 +30,13 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #include <emmintrin.h>
 #include <algorithm>
 #include <vector>
+#include <opencv2/opencv.hpp>
 
 #include "matrix.h"
+
+/*for test*/
+//#include "common_include.h"
+
 
 class Matcher {
 
@@ -40,30 +45,30 @@ public:
   // parameter settings
   struct parameters {
 
-    int32_t nms_n;                  // non-max-suppression: min. distance between maxima (in pixels)
-    int32_t nms_tau;                // non-max-suppression: interest point peakiness threshold
-    int32_t match_binsize;          // matching bin width/height (affects efficiency only)
-    int32_t match_radius;           // matching radius (du/dv in pixels)
-    int32_t match_disp_tolerance;   // dv tolerance for stereo matches (in pixels)
-    int32_t outlier_disp_tolerance; // outlier removal: disparity tolerance (in pixels)
-    int32_t outlier_flow_tolerance; // outlier removal: flow tolerance (in pixels)
-    int32_t multi_stage;            // 0=disabled,1=multistage matching (denser and faster)
-    int32_t half_resolution;        // 0=disabled,1=match at half resolution, refine at full resolution
-    int32_t refinement;             // refinement (0=none,1=pixel,2=subpixel)
-    double  f,cu,cv,base;           // calibration (only for match prediction)
+    int32_t nms_n;                      // non-max-suppression: min. distance between maxima (in pixels)
+    int32_t nms_tau;                    // non-max-suppression: interest point peakiness threshold
+    int32_t match_binsize;              // matching bin width/height (affects efficiency only)
+    int32_t match_radius;               // matching radius (du/dv in pixels)
+    int32_t match_disp_tolerance;       // dv tolerance for stereo matches (in pixels)
+    int32_t outlier_disp_tolerance;     // outlier removal: disparity tolerance (in pixels)
+    int32_t outlier_flow_tolerance;     // outlier removal: flow tolerance (in pixels)
+    int32_t multi_stage;                // 0=disabled,1=multistage matching (denser and faster)
+    int32_t half_resolution;            // 0=disabled,1=match at half resolution, refine at full resolution
+    int32_t refinement;                 // refinement (0=none,1=pixel,2=subpixel)
+    double  f,cu,cv,base;               // calibration (only for match prediction)
 
     // default settings
     parameters () {
-      nms_n                  = 3;   //非极大值抑制的最小值
-      nms_tau                = 50;  //兴趣点峰值阈值
-      match_binsize          = 50;  //50 x 50 pixel
-      match_radius           = 200; //匹配半径
-      match_disp_tolerance   = 2;   //need < 2pixel
-      outlier_disp_tolerance = 5;   //if disp > 5, then it is an outlier!
-      outlier_flow_tolerance = 5;   //if flow > 5, then it is an outlier!
-      multi_stage            = 1;   //多步骤匹配
-      half_resolution        = 1;   //
-      refinement             = 1;   //精度1=pixel,2=subpixel
+      nms_n                  = 3;       //非极大值抑制 pixel非极大值抑制参数，这个值越大，说明兴趣点的间隔越大
+      nms_tau                = 50;      //兴趣点峰值阈值
+      match_binsize          = 50;      //50 x 50 pixel
+      match_radius           = 200;     //匹配半径
+      match_disp_tolerance   = 2;       //need < 2pixel
+      outlier_disp_tolerance = 5;       //if disp > 5, then it is an outlier!
+      outlier_flow_tolerance = 5;       //if flow > 5, then it is an outlier!
+      multi_stage            = 1;       //多步骤匹配
+      half_resolution        = 1;       //
+      refinement             = 1;       //精度1=pixel,2=subpixel
     }
   };
 
@@ -97,6 +102,21 @@ public:
             u1p(u1p),v1p(v1p),i1p(i1p),u2p(u2p),v2p(v2p),i2p(i2p),
             u1c(u1c),v1c(v1c),i1c(i1c),u2c(u2c),v2c(v2c),i2c(i2c) {}
   };
+
+
+  // structure for storing interest points
+  struct maximum {
+    int32_t u;   // u-coordinate
+    int32_t v;   // v-coordinate
+    int32_t val; // value
+    int32_t c;   // class
+    int32_t d1,d2,d3,d4,d5,d6,d7,d8; // descriptor 128bits = 128/8=16Bytes
+    maximum() {}
+    maximum(int32_t u,int32_t v,int32_t val,int32_t c):u(u),v(v),val(val),c(c) {}
+  };
+
+
+
 
   // computes features from left/right images and pushes them back to a ringbuffer,
   // which interally stores the features of the current and previous image pair
@@ -134,18 +154,22 @@ public:
   // and you want to cancel the change of (unknown) camera gain.
   float getGain (std::vector<int32_t> inliers);
 
+  //**new add**/
+  std::vector<Matcher::maximum> getFeatureSparse();
+  std::vector<Matcher::maximum> getFeatureDense();
+
 private:
 
-  // structure for storing interest points
-  struct maximum {
-    int32_t u;   // u-coordinate
-    int32_t v;   // v-coordinate
-    int32_t val; // value
-    int32_t c;   // class
-    int32_t d1,d2,d3,d4,d5,d6,d7,d8; // descriptor
-    maximum() {}
-    maximum(int32_t u,int32_t v,int32_t val,int32_t c):u(u),v(v),val(val),c(c) {}
-  };
+//  // structure for storing interest points
+//  struct maximum {
+//    int32_t u;   // u-coordinate
+//    int32_t v;   // v-coordinate
+//    int32_t val; // value
+//    int32_t c;   // class
+//    int32_t d1,d2,d3,d4,d5,d6,d7,d8; // descriptor 128bits = 128/8=16Bytes
+//    maximum() {}
+//    maximum(int32_t u,int32_t v,int32_t val,int32_t c):u(u),v(v),val(val),c(c) {}
+//  };
 
   // u/v ranges for matching stage 0-3
   struct range {
@@ -165,6 +189,7 @@ private:
   };
 
   // computes the address offset for coordinates u,v of an image of given width
+  // 返回值可以认为是图像原本是二维数组，得到的是一维数组下的坐标，就是将二维数组拍成一维数组下的坐标
   inline int32_t getAddressOffsetImage (const int32_t& u,const int32_t& v,const int32_t& width) {
     return v*width+u;
   }
@@ -178,6 +203,7 @@ private:
   void filterImageSobel (uint8_t* I,uint8_t* I_du,uint8_t* I_dv,const int* dims);
   inline void computeDescriptor (const uint8_t* I_du,const uint8_t* I_dv,const int32_t &bpl,const int32_t &u,const int32_t &v,uint8_t *desc_addr);
   inline void computeSmallDescriptor (const uint8_t* I_du,const uint8_t* I_dv,const int32_t &bpl,const int32_t &u,const int32_t &v,uint8_t *desc_addr);
+  /*!!!attention!!!*/
   void computeDescriptors (uint8_t* I_du,uint8_t* I_dv,const int32_t bpl,std::vector<Matcher::maximum> &maxima);
 
   void getHalfResolutionDimensions(const int32_t *dims,int32_t *dims_half);
@@ -187,7 +213,7 @@ private:
   // inputs:  I ........ image
   //          dims ..... image dimensions [width,height]
   //          n ........ non-max neighborhood
-  //          tau ...... non-max threshold
+  //          tau ...... non-max threshold //50?
   // outputs: max ...... vector with maxima [u,v,value,class,descriptor (128 bits)]
   //          I_du ..... gradient in horizontal direction
   //          I_dv ..... gradient in vertical direction
@@ -242,6 +268,9 @@ private:
   std::vector<Matcher::p_match> p_matched_1;
   std::vector<Matcher::p_match> p_matched_2;
   std::vector<Matcher::range>   ranges;
+  /*may be we need to add something to get more informations*/
+  std::vector<Matcher::maximum> mvfeatureSparse;
+  std::vector<Matcher::maximum> mvfeatureDense;
 };
 
 #endif

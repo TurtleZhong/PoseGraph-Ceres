@@ -121,7 +121,7 @@ public:
         return os;
     }
 
-protected:
+public:
 
     // calls bucketing and motion estimation
     bool updateMotion ();

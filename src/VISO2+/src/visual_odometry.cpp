@@ -10,8 +10,6 @@
 #include "visual_odometry.h"
 #include "g2o_types.h"
 
-namespace myslam
-{
 
 VisualOdometry::VisualOdometry() :
     state_ ( INITIALIZING ),
@@ -352,5 +350,3 @@ double VisualOdometry::getViewAngle ( Frame::Ptr frame, MapPoint::Ptr point )
     return acos( n.transpose()*point->norm_ );
 }
 
-
-}

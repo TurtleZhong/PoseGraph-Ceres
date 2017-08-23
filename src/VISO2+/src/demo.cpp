@@ -143,9 +143,15 @@ int main (int argc, char** argv) {
         int32_t dims[] = {width,height,width};
         if (viso.process(left_img_data,right_img_data,dims)) {
 
-            imshow("current",imLeft);
+            //imshow("current",imLeft);
 
 
+
+//            std::vector<Matcher::maximum> featureSparse = viso.matcher->getFeatureSparse();
+//            std::vector<Matcher::maximum> featureDense = viso.matcher->getFeatureDense();
+//            cout << endl <<  "in demo.cpp " << "featureSparce.size= " << featureSparse.size() << endl;
+//            cout << endl <<  "in demo.cpp " << "featureDense.size = " << featureDense.size() << endl;
+//            waitKey(0);
 
 
             Matrix Tcl = viso.getMotion();
@@ -154,9 +160,10 @@ int main (int argc, char** argv) {
             pose = pose * Matrix::inv(viso.getMotion());
 
             /*plot the right matchs add by zhong*/
-            if(i > 5)
+            if(i > 2)
             {
                 std::vector<Matcher::p_match> featureMatchs = viso.getMatches();
+                cout << "run here" << endl;
                 //                    Mat currentFrame = drawFeatureMatches(imLeft,imRight,featureMatchs,0);
                 //                    Mat previousFrame = drawFeatureMatches(previous_imLeft,previous_imLeft,featureMatchs,1);
                 //                    imshow("currentFrame",currentFrame);
@@ -165,7 +172,8 @@ int main (int argc, char** argv) {
                 //Mat output = drawCircularMatches(imLeft,imRight,previous_imLeft,previous_imRight,featureMatchs);
                 vector<Mat> output = drawReprojectionError(imLeft,previous_imLeft,featureMatchs,Tcl,i);
                 imshow("Reprojection Error!",output[0]);
-                imshow("Matches",output[1]);
+                //imshow("Matches",output[1]);
+                waitKey(0);
 
             }
 

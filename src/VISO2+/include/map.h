@@ -4,8 +4,6 @@
 #include "frame.h"
 #include "mappoint.h"
 
-namespace myslam
-{
 
 class Map
 {
@@ -21,7 +19,4 @@ public:
 
 };
 
-
-
-}
 #endif // MAP_H

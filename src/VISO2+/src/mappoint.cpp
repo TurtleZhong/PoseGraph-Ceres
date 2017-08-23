@@ -1,7 +1,6 @@
 #include "common_include.h"
 #include "mappoint.h"
 
-using namespace myslam;
 
 MapPoint::MapPoint()
     : id_(-1), pos_(Vector3d(0,0,0)), norm_(Vector3d(0,0,0)), good_(true), visible_times_(0), matched_times_(0)

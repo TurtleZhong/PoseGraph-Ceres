@@ -1,6 +1,5 @@
 #include "map.h"
 
-using namespace myslam;
 
 void Map::insertKeyFrame(Frame::Ptr frame)
 {
