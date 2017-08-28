@@ -48,6 +48,7 @@ public:
   // constructor, takes as inpute a parameter structure
   VisualOdometryStereo (parameters param);
 
+
   // deconstructor
   ~VisualOdometryStereo ();
 

@@ -28,6 +28,7 @@
 #include"Thirdparty/g2o/g2o/types/types_seven_dof_expmap.h"
 #include<sophus/so3.h>
 #include<sophus/se3.h>
+#include"matrix.h"
 
 
 
@@ -52,9 +53,11 @@ public:
 
     static std::vector<float> toQuaternion(const cv::Mat &M);
 
-    static uint8_t* toPng(const cv::Mat &image);
+    static uint8_t* toPng(cv::Mat image);
 
     static Sophus::SE3 toSE3(const cv::Mat &cvT);
+    static cv::Mat toCvMat(const Matrix& pose);
+
 
 
 

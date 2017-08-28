@@ -155,8 +155,20 @@ public:
   float getGain (std::vector<int32_t> inliers);
 
   //**new add**/
-  std::vector<Matcher::maximum> getFeatureSparse();
-  std::vector<Matcher::maximum> getFeatureDense();
+  // vector[0] --> left  sparse features
+  // vector[1] --> left  dense  features
+  // vector[2] --> right sparse features
+  // vector[3] --> right dense  features
+  std::vector< std::vector<Matcher::maximum> > getFeaturePrevious();
+  std::vector< std::vector<Matcher::maximum> > getFeatureCurrent();
+
+  /*may be we need to add something to get more informations*/
+  std::vector<Matcher::maximum> mvfeatureCurrentLeft;
+  std::vector<Matcher::maximum> mvfeatureCurrentRight;
+  std::vector<Matcher::maximum> mvfeaturePreviousLeft;
+  std::vector<Matcher::maximum> mvfeaturePreviousRight;
+
+  int saveFlag;
 
 private:
 
@@ -217,8 +229,9 @@ private:
   // outputs: max ...... vector with maxima [u,v,value,class,descriptor (128 bits)]
   //          I_du ..... gradient in horizontal direction
   //          I_dv ..... gradient in vertical direction
+  //          saveFeatureFlag   0 left image 1 right image
   // WARNING: max,I_du,I_dv has to be freed by yourself!
-  void computeFeatures (uint8_t *I,const int32_t* dims,int32_t* &max1,int32_t &num1,int32_t* &max2,int32_t &num2,uint8_t* &I_du,uint8_t* &I_dv,uint8_t* &I_du_full,uint8_t* &I_dv_full);
+  void computeFeatures (uint8_t *I, const int32_t* dims, int32_t* &max1, int32_t &num1, int32_t* &max2, int32_t &num2, uint8_t* &I_du, uint8_t* &I_dv, uint8_t* &I_du_full, uint8_t* &I_dv_full, int saveFeatureFlag = 0);
 
   // matching functions
   void computePriorStatistics (std::vector<Matcher::p_match> &p_matched,int32_t method);
@@ -254,6 +267,13 @@ private:
   parameters param;
   int32_t    margin;
 
+  /* 1-->left image
+   * 2-->right image
+   * m-->features maximum
+   * p-->previous image
+   * c-->current image
+   */
+
   int32_t *m1p1,*m2p1,*m1c1,*m2c1;
   int32_t *m1p2,*m2p2,*m1c2,*m2c2;
   int32_t n1p1,n2p1,n1c1,n2c1;
@@ -268,9 +288,7 @@ private:
   std::vector<Matcher::p_match> p_matched_1;
   std::vector<Matcher::p_match> p_matched_2;
   std::vector<Matcher::range>   ranges;
-  /*may be we need to add something to get more informations*/
-  std::vector<Matcher::maximum> mvfeatureSparse;
-  std::vector<Matcher::maximum> mvfeatureDense;
+
 };
 
 #endif

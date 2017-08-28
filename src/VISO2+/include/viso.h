@@ -97,6 +97,7 @@ public:
     // returns previous to current feature matches from internal matcher
     std::vector<Matcher::p_match> getMatches () { return matcher->getMatches(); }
 
+
     // returns the number of successfully matched points, after bucketing
     int32_t getNumberOfMatches () { return p_matched.size(); }
 
@@ -143,7 +144,8 @@ public:
     double                        *J;          // jacobian
     double                        *p_observe;  // observed 2d points
     double                        *p_predict;  // predicted 2d points
-    std::vector<Matcher::p_match>  p_matched;  // feature point matches
+    std::vector<Matcher::p_match>  p_matched;  // feature point matches !!!
+    std::vector<Matcher::p_match>  p_stereoMatched; //get the current left and right match
 
 private:
 

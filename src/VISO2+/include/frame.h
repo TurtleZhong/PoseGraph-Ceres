@@ -1,10 +1,16 @@
 #ifndef FRAME_H
 #define FRAME_H
 #include "common_include.h"
+#include "config.h"
 #include "camera.h"
 #include "viso_stereo.h" /*This file is contain the matcher */
 #include "converter.h"
+#include "matcher.h"
+#include "mappoint.h"
 
+class Matcher;
+class VisualOdometry;
+class VisualOdometryStereo;
 class Frame
 {
 
@@ -12,75 +18,94 @@ class Frame
 public:
 
     typedef std::shared_ptr<Frame>   Ptr;
-    unsigned long                    id_;                            // id of the current frame
-    //double                           time_stamp_;                    // when it is recorded
+    unsigned long                    mId;                            // id of the current frame
+    Camera::Ptr                      mpCamera;                        // Pinhole RGBD camera model (for deteil please see camera.h)
 
-    Camera::Ptr                      camera_;                        // Pinhole RGBD camera model (for deteil please see camera.h)
-
-    //Here we need the feature and descriptor. It is contained in "viso_stereo.h"
-    std::vector<Matcher::p_match>    matches_;
+    std::vector<Matcher::p_match>    mvCircularMatches;
 
     /*Image*/
-    cv::Mat                          imLeft_;
-    cv::Mat                          imRight_;
+    cv::Mat                          mImgLeft;
+    cv::Mat                          mImgRight;
+
+    /*params*/
+    VisualOdometryStereo::parameters mparams;
 
 
     /*params for liviso2*/
     int32_t                          dims[3];
-    uint8_t*                         img_left_data;
-    uint8_t*                         img_right_data;
+    uint8_t*                         mpimg_left_data;
+    uint8_t*                         mpimg_right_data;
 
     // Rotation, translation and camera center
-    SE3                              T_c_w_;                         // transform from world to camera
+    Mat                              mTcl;                           // last -> curent
 
-    Mat                              Tcw_;                           // Opencv type, transform from world to camera
-    cv::Mat                          Rcw_;                           // Rotation from world to camera
-    cv::Mat                          tcw_;                           // Translation from world to camera
-    cv::Mat                          Rwc_;                           // Rotation from camera to world
-    cv::Mat                          Ow_;                            // mtwc,Translation from camera to world
+
+    // features and descriptor
+    // u,v,val,class,d1~d8 descriptors
+    std::vector<Matcher::maximum> mvfeatureCurrentLeft;
+    std::vector<Matcher::maximum> mvfeatureCurrentRight;
+    std::vector<Matcher::maximum> mvfeaturePreviousLeft;
+    std::vector<Matcher::maximum> mvfeaturePreviousRight;
+
+    std::vector< std::vector<int32_t> > mvDescriptors;
+
+
+
+    std::vector<Matcher::p_match>     mvStereoMatches;        //this one is use to compute the depth
+    std::vector<float>                mvDepth;
 
 
 public:
 
-    int                              N_;                             //Keypoints of circular matching
+    /*KeyPoints all points --> Current Left*/
+    int                              N_total;                       // Number of KeyPoints sparse+dense.
+    int                              N_circular;                    // Keypoints of circular matching
+    int                              N_parallel;                    // Keypoints of left and right
 
     // MapPoints associated to keypoints, NULL pointer if no association.
-    // 每个特征点对应的MapPoint
-    //std::vector<MapPoint*> mvpMapPoints;
+    // 每个特征点对应的MapPoint maybe we need stereo matched mappoints's descriptor
+    std::vector<MapPoint*> mvpMapPoints;
 
     // Flag to identify outlier associations.
     // 观测不到Map中的3D点
     std::vector<bool> mvbOutlier;
 
+public: //actually it should be privite
+    SE3                              mT_c_w;                         // transform from world to camera
+    Mat                              mTcw;                           // Opencv type, transform from world to camera
+    cv::Mat                          mRcw;                           // Rotation from world to camera
+    cv::Mat                          mtcw;                           // Translation from world to camera
+    cv::Mat                          mRwc;                           // Rotation from camera to world
+    cv::Mat                          mOw;                            // mtwc,Translation from camera to world
+
 
 public:
     Frame();
 
-    // Copy constructor.
-    //Frame(const Frame &frame);
-    Frame(
-            long id,
-            Camera::Ptr camera = nullptr,
-            Mat imLeft = Mat(),
-            Mat imRight = Mat()
+
+
+    Frame(long id,
+            Camera::Ptr camera,
+            Mat imLeft,
+            Mat imRight
             );
+
+    // Copy constructor.
+    Frame(const Frame &frame);
     ~Frame();
 
-//    static Frame::Ptr createFrame(            long id,
-//                                              Camera::Ptr camera = nullptr,
-//                                              Mat imLeft = Mat(),
-//                                              Mat imRight = Mat());
-
-    /*get depth*/
-
-
-
     // get feature matching [Blob and Corner] on the image.
-    std::vector<Matcher::p_match> getFeatureMatches();
+    std::vector<Matcher::p_match> getCircularMatches();
 
-    // Extract descriptors
+    // get stereo matching.
+    std::vector<Matcher::p_match> getStereoMatches();
 
-    //void ExtractDescriptors(); /*maybe need some param*/
+
+    // compute the mvDepth
+    void computeDepth();
+
+    // compute the descriptors
+    void computeDescriptor();
 
     // Set the camera pose.
     void setPose(cv::Mat Tcw); /*Set Tcw_*/
@@ -91,17 +116,30 @@ public:
     // Returns the camera center.
     inline cv::Mat GetCameraCenter()
     {
-        return Ow_.clone();
+        return mOw.clone();
     }
 
     // Returns inverse of rotation
     inline cv::Mat getRotationInverse()
     {
-        return Rwc_.clone();
+        return mRwc.clone();
     }
 
+    //judge a 3d point is in the frame
     bool isInFrame(const Eigen::Vector3d &pt_world);
     bool isInFrame(const cv::Mat &pt_world);
+
+
+    /**
+     * @brief 找到在 以x,y为中心,边长为2r的方形内的特征点
+     * @param x --> 图像坐标u
+     * @param y --> 图像坐标v
+     * @param r --> 边长
+     * @return满足条件的特征点的序号
+     */
+    vector<size_t> getFeatureInArea(const float &x, const float &y, const float &r );
+
+
 
     // Check if a MapPoint is in the frustum of the camera
     // and fill variables of the MapPoint to be used by the tracking

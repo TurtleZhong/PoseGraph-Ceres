@@ -21,10 +21,12 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 #include "viso_stereo.h"
 using namespace std;
+#define BOLDRED "\033[1m\033[31m"      /* Bold Red */
 
 VisualOdometryStereo::VisualOdometryStereo (parameters param) : param(param), VisualOdometry(param) {
     matcher->setIntrinsics(param.calib.f,param.calib.cu,param.calib.cv,param.base);
 }
+
 
 VisualOdometryStereo::~VisualOdometryStereo() {
 }
@@ -34,8 +36,18 @@ bool VisualOdometryStereo::process (uint8_t *I1,uint8_t *I2,int32_t* dims,bool r
     // push back images
     matcher->pushBack(I1,I2,dims,replace);
 
+
+    /*no metter Tr_valid is exit we need to get the stereo feature matching*/
+    matcher->matchFeatures(1);//method=1
+    matcher->bucketFeatures(param.bucket.max_features,param.bucket.bucket_width,param.bucket.bucket_height);
+    p_stereoMatched = matcher->getMatches();
+    cout << endl << BOLDRED"p_stereoMatched.size= " << p_stereoMatched.size() << endl;
+
+
     // bootstrap motion estimate if invalid
     if (!Tr_valid) {
+        /*new add */
+
         matcher->matchFeatures(2);//method=2
         matcher->bucketFeatures(param.bucket.max_features,param.bucket.bucket_width,param.bucket.bucket_height);
         p_matched = matcher->getMatches();
@@ -47,6 +59,8 @@ bool VisualOdometryStereo::process (uint8_t *I1,uint8_t *I2,int32_t* dims,bool r
     else          matcher->matchFeatures(2);
     matcher->bucketFeatures(param.bucket.max_features,param.bucket.bucket_width,param.bucket.bucket_height);
     p_matched = matcher->getMatches();
+
+
     return updateMotion();
 }
 

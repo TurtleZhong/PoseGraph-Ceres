@@ -28,20 +28,20 @@ int main(int argc, char *argv[])
     /***************************Part2 frame.cpp test********************************/
     Mat Left = cv::imread("/home/m/KITTI/dataset/sequences/00/image_0/000000.png");
     Mat Right = cv::imread("/home/m/KITTI/dataset/sequences/00/image_1/000000.png");
-    Frame currentFrame(0, camera, Left, Right);
-    cv::imshow("currrent frame", currentFrame.imLeft_);
-    cout << "Frame:\n";
-    cout << "Frame.camera.bf = " << currentFrame.camera_->bf_ << endl;
+//    Frame currentFrame(0, camera, Left, Right);
+//    cv::imshow("currrent frame", currentFrame.mImgLeft);
+//    cout << "Frame:\n";
+//    cout << "Frame.camera.bf = " << currentFrame.mpCamera->bf_ << endl;
 
-    /*set pose*/
-    Mat T = Converter::toCvMat(SE3_Rt.matrix());
-    currentFrame.setPose(T);
-    cout << "Frame.Tcw =\n" <<  currentFrame.T_c_w_ << endl;
-    cout << "Frame.Tcw =\n" <<  currentFrame.Tcw_ << endl;
-    for(int i = 0; i < Left.rows*Left.cols; i++)
-    {
-        cout << "Frame.imgdata " << currentFrame.img_left_data[i] << endl;
-    }
+//    /*set pose*/
+//    Mat T = Converter::toCvMat(SE3_Rt.matrix());
+//    currentFrame.setPose(T);
+//    cout << "Frame.Tcw =\n" <<  currentFrame.mT_c_w << endl;
+//    cout << "Frame.Tcw =\n" <<  currentFrame.mTcw << endl;
+//    for(int i = 0; i < Left.rows*Left.cols; i++)
+//    {
+//        cout << "Frame.imgdata " << currentFrame.mpimg_left_data[i] << endl;
+//    }
 
 
 

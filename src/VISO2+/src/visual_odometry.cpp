@@ -115,12 +115,12 @@ void VisualOdometry::featureMatching()
     {
         MapPoint::Ptr& p = allpoints.second;
         // check if p in curr frame image
-        if ( curr_->isInFrame(p->pos_) )
+        if ( curr_->isInFrame(p->mPos) )
         {
             // add to candidate
-            p->visible_times_++;
+            p->mVisible_times++;
             candidate.push_back( p );
-            desp_map.push_back( p->descriptor_ );
+            desp_map.push_back( p->mDescriptor );
         }
     }
 
@@ -345,8 +345,8 @@ void VisualOdometry::optimizeMap()
 
 double VisualOdometry::getViewAngle ( Frame::Ptr frame, MapPoint::Ptr point )
 {
-    Vector3d n = point->pos_ - frame->getCamCenter();
+    Vector3d n = point->mPos - frame->getCamCenter();
     n.normalize();
-    return acos( n.transpose()*point->norm_ );
+    return acos( n.transpose()*point->mNorm );
 }
 

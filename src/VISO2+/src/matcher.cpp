@@ -57,6 +57,7 @@ Matcher::Matcher(parameters param) : param(param) {
     // adjust match radius on half resolution
     if (param.half_resolution)
         this->param.match_radius /= 2;
+    saveFlag = 0;
 }
 
 // deconstructor
@@ -153,6 +154,16 @@ pushBack (uint8_t *I1,uint8_t* I2,int32_t* dims,const bool replace) {
         dims_p[1]   = dims_c[1];
         dims_p[2]   = dims_c[2];
         /*所有上一帧的数据等于这一帧的*/
+        this->mvfeaturePreviousLeft.clear();
+        this->mvfeaturePreviousRight.clear();
+
+        mvfeaturePreviousLeft.swap(mvfeatureCurrentLeft);
+        mvfeaturePreviousRight.swap(mvfeatureCurrentRight);
+
+
+
+        this->mvfeatureCurrentLeft.clear();
+        this->mvfeatureCurrentRight.clear();
     }
 
     // set new dims (bytes per line must be multiple of 16) 保证是16的倍数
@@ -173,7 +184,12 @@ pushBack (uint8_t *I1,uint8_t* I2,int32_t* dims,const bool replace) {
         for (int32_t v=0; v<height; v++) {
             memcpy(I1c+v*dims_c[2],I1+v*bpl,dims_c[0]*sizeof(uint8_t));
             if (I2!=0)
+            {
+
                 memcpy(I2c+v*dims_c[2],I2+v*bpl,dims_c[0]*sizeof(uint8_t));
+            }
+
+
         }
     }
     /*for test we show the copyed image*/
@@ -185,9 +201,16 @@ pushBack (uint8_t *I1,uint8_t* I2,int32_t* dims,const bool replace) {
     // compute new features for current frame
     computeFeatures(I1c,dims_c,m1c1,n1c1,m1c2,n1c2,I1c_du,I1c_dv,I1c_du_full,I1c_dv_full);
     if (I2!=0)
-        computeFeatures(I2c,dims_c,m2c1,n2c1,m2c2,n2c2,I2c_du,I2c_dv,I2c_du_full,I2c_dv_full);
-}
+    {
+        saveFlag = 1;
+        computeFeatures(I2c,dims_c,m2c1,n2c1,m2c2,n2c2,I2c_du,I2c_dv,I2c_du_full,I2c_dv_full,1);
+    }
 
+ }
+// match features currently stored in ring buffer (current and previous frame)
+// input: method ... 0 = flow, 1 = stereo, 2 = quad matching
+//        Tr_delta: uses motion from previous frame to better search for
+//                  matches, if specified
 void Matcher::matchFeatures(int32_t method, Matrix *Tr_delta) {
 
     //////////////////
@@ -220,8 +243,8 @@ void Matcher::matchFeatures(int32_t method, Matrix *Tr_delta) {
     }
 
     // clear old matches
-    p_matched_1.clear();
-    p_matched_2.clear();
+    p_matched_1.clear(); //sparse features
+    p_matched_2.clear(); //dense features
 
     // double pass matching
     if (param.multi_stage) {
@@ -331,19 +354,112 @@ float Matcher::getGain (vector<int32_t> inliers) {
     else       return 1;
 }
 
-std::vector<Matcher::maximum> Matcher::getFeatureSparse()
+std::vector<std::vector<Matcher::maximum> > Matcher::getFeaturePrevious()
 {
-    std::vector<Matcher::maximum> tmp;
-    tmp.swap(this->mvfeatureSparse);
-    return tmp;
+    /*have not been realized*/
+    std::vector< std::vector<Matcher::maximum> > output;
+    std::vector<Matcher::maximum> vtmp;
+
+    int32_t step_size = sizeof(Matcher::maximum)/sizeof(int32_t); //48
+    for (int32_t i1p1 = 0; i1p1 < this->n1p1; i1p1++ )
+    {
+        //cout << endl << "doing somethings" << endl;
+        /*Left image sparse feature*/
+        Matcher::maximum tmp;
+        tmp.u   =  *(m1p1 + step_size * i1p1 + 0);
+        tmp.v   =  *(m1p1 + step_size * i1p1 + 1);
+        tmp.val =  *(m1p1 + step_size * i1p1 + 2);
+        tmp.c   =  *(m1p1 + step_size * i1p1 + 3);
+        tmp.d1  =  *(m1p1 + step_size * i1p1 + 4);
+        tmp.d2  =  *(m1p1 + step_size * i1p1 + 5);
+        tmp.d3  =  *(m1p1 + step_size * i1p1 + 6);
+        tmp.d4  =  *(m1p1 + step_size * i1p1 + 7);
+        tmp.d5  =  *(m1p1 + step_size * i1p1 + 8);
+        tmp.d6  =  *(m1p1 + step_size * i1p1 + 9);
+        tmp.d7  =  *(m1p1 + step_size * i1p1 + 10);
+        tmp.d8  =  *(m1p1 + step_size * i1p1 + 11);
+        vtmp.push_back(tmp);
+        //cout << "vtooomp = " << vtmp.size() << endl;
+    }
+
+    output.push_back(vtmp);
+    cout << "vtmp = " << vtmp.size() << endl;
+    vtmp.clear();
+
+
+    for (int32_t i1p2 = 0; i1p2 < this->n1p2; i1p2++ )
+    {
+        Matcher::maximum tmp;
+        tmp.u   =  *(this->m1p2 + step_size * i1p2 + 0);
+        tmp.v   =  *(this->m1p2 + step_size * i1p2 + 1);
+        tmp.val =  *(this->m1p2 + step_size * i1p2 + 2);
+        tmp.c   =  *(this->m1p2 + step_size * i1p2 + 3);
+        tmp.d1  =  *(this->m1p2 + step_size * i1p2 + 4);
+        tmp.d2  =  *(this->m1p2 + step_size * i1p2 + 5);
+        tmp.d3  =  *(this->m1p2 + step_size * i1p2 + 6);
+        tmp.d4  =  *(this->m1p2 + step_size * i1p2 + 7);
+        tmp.d5  =  *(this->m1p2 + step_size * i1p2 + 8);
+        tmp.d6  =  *(this->m1p2 + step_size * i1p2 + 9);
+        tmp.d7  =  *(this->m1p2 + step_size * i1p2 + 10);
+        tmp.d8  =  *(this->m1p2 + step_size * i1p2 + 11);
+        vtmp.push_back(tmp);
+    }
+
+    output.push_back(vtmp);
+    vtmp.clear();
+
+    for (int32_t i2p1 = 0; i2p1 < this->n2p1; i2p1++ )
+    {
+        Matcher::maximum tmp;
+        tmp.u   =  *(this->m2p1 + step_size * i2p1 + 0);
+        tmp.v   =  *(this->m2p1 + step_size * i2p1 + 1);
+        tmp.val =  *(this->m2p1 + step_size * i2p1 + 2);
+        tmp.c   =  *(this->m2p1 + step_size * i2p1 + 3);
+        tmp.d1  =  *(this->m2p1 + step_size * i2p1 + 4);
+        tmp.d2  =  *(this->m2p1 + step_size * i2p1 + 5);
+        tmp.d3  =  *(this->m2p1 + step_size * i2p1 + 6);
+        tmp.d4  =  *(this->m2p1 + step_size * i2p1 + 7);
+        tmp.d5  =  *(this->m2p1 + step_size * i2p1 + 8);
+        tmp.d6  =  *(this->m2p1 + step_size * i2p1 + 9);
+        tmp.d7  =  *(this->m2p1 + step_size * i2p1 + 10);
+        tmp.d8  =  *(this->m2p1 + step_size * i2p1 + 11);
+        vtmp.push_back(tmp);
+    }
+
+    output.push_back(vtmp);
+    vtmp.clear();
+
+    for (int32_t i2p2 = 0; i2p2 < this->n2p2; i2p2++ )
+    {
+        Matcher::maximum tmp;
+        tmp.u   =  *(this->m2p2 + step_size * i2p2 + 0);
+        tmp.v   =  *(this->m2p2 + step_size * i2p2 + 1);
+        tmp.val =  *(this->m2p2 + step_size * i2p2 + 2);
+        tmp.c   =  *(this->m2p2 + step_size * i2p2 + 3);
+        tmp.d1  =  *(this->m2p2 + step_size * i2p2 + 4);
+        tmp.d2  =  *(this->m2p2 + step_size * i2p2 + 5);
+        tmp.d3  =  *(this->m2p2 + step_size * i2p2 + 6);
+        tmp.d4  =  *(this->m2p2 + step_size * i2p2 + 7);
+        tmp.d5  =  *(this->m2p2 + step_size * i2p2 + 8);
+        tmp.d6  =  *(this->m2p2 + step_size * i2p2 + 9);
+        tmp.d7  =  *(this->m2p2 + step_size * i2p2 + 10);
+        tmp.d8  =  *(this->m2p2 + step_size * i2p2 + 11);
+        vtmp.push_back(tmp);
+    }
+
+    output.push_back(vtmp);
+    vtmp.clear();
+    return output;
 
 }
 
-std::vector<Matcher::maximum> Matcher::getFeatureDense()
+std::vector<std::vector<Matcher::maximum> > Matcher::getFeatureCurrent()
 {
+    /*have not been realized*/
+    std::vector< std::vector<Matcher::maximum> > output;
     std::vector<Matcher::maximum> tmp;
-    tmp.swap(this->mvfeatureDense);
-    return tmp;
+
+    return output;
 }
 
 
@@ -682,7 +798,7 @@ uint8_t* Matcher::createHalfResolutionImage(uint8_t *I,const int32_t* dims) {
 //          I_du ..... gradient in horizontal direction
 //          I_dv ..... gradient in vertical direction
 // WARNING: max,I_du,I_dv has to be freed by yourself!
-void Matcher::computeFeatures (uint8_t *I,const int32_t* dims,int32_t* &max1,int32_t &num1,int32_t* &max2,int32_t &num2,uint8_t* &I_du,uint8_t* &I_dv,uint8_t* &I_du_full,uint8_t* &I_dv_full) {
+void Matcher::computeFeatures (uint8_t *I,const int32_t* dims,int32_t* &max1,int32_t &num1,int32_t* &max2,int32_t &num2,uint8_t* &I_du,uint8_t* &I_dv,uint8_t* &I_du_full,uint8_t* &I_dv_full,int saveFeatureFlag) {
 
     int16_t *I_f1;
     int16_t *I_f2;
@@ -725,11 +841,11 @@ void Matcher::computeFeatures (uint8_t *I,const int32_t* dims,int32_t* &max1,int
         filter::blob5x5(I_matching,I_f1,dims_matching[2],dims_matching[1]);
         filter::checkerboard5x5(I_matching,I_f2,dims_matching[2],dims_matching[1]);
 
-        cv::Mat If1(dims_matching[1],dims_matching[2],CV_16UC1,I_f1);
-        cv::imshow("If1",If1);
-        cv::Mat If2(dims_matching[1],dims_matching[2], CV_16UC1, I_f2);
-        cv::imshow("If2",If2);
-        cv::waitKey(0);
+//        cv::Mat If1(dims_matching[1],dims_matching[2],CV_16UC1,I_f1);
+//        cv::imshow("If1",If1);
+//        cv::Mat If2(dims_matching[1],dims_matching[2], CV_16UC1, I_f2);
+//        cv::imshow("If2",If2);
+//        cv::waitKey(0);
         _mm_free(I_matching);
     }
 
@@ -806,11 +922,32 @@ void Matcher::computeFeatures (uint8_t *I,const int32_t* dims,int32_t* &max1,int
 
 
     /*copy it to the class member*/
-    this->mvfeatureSparse.swap(maxima1);
-    this->mvfeatureDense.swap(maxima2);
+    if(saveFeatureFlag == 0)
+    {
+        //cout << endl << "Now we get the Left image features" << endl;
+//        for (vector<Matcher::maximum>::iterator it=maxima1.begin(); it!=maxima1.end(); it++)
+//        {
+//            it->u = it->u * 2;
+//            it->v = it->v * 2;
+//        }
+        for (vector<Matcher::maximum>::iterator it=maxima2.begin(); it!=maxima2.end(); it++)
+        {
+            it->u = it->u * 2;
+            it->v = it->v * 2;
+        }
+        mvfeatureCurrentLeft.swap(maxima2);
+    }
+    if(saveFeatureFlag == 1)
+    {
+        for (vector<Matcher::maximum>::iterator it=maxima2.begin(); it!=maxima2.end(); it++)
+        {
+            it->u = it->u * 2;
+            it->v = it->v * 2;
+        }
+        //mvfeatureCurrentRight.push_back(maxima1);
+        mvfeatureCurrentRight.swap(maxima2);
 
-//    cout << "mvfeature and descriptors = " << mvfeatureSparse[1].u << endl;
-//    cv::waitKey(0);
+    }
 }
 
 void Matcher::computePriorStatistics (vector<Matcher::p_match> &p_matched,int32_t method) {
@@ -981,8 +1118,14 @@ inline void Matcher::findMatch (int32_t* m1,const int32_t &i1,int32_t* m2,const 
     int32_t u1       = *(m1+step_size*i1+0);
     int32_t v1       = *(m1+step_size*i1+1);
     int32_t c        = *(m1+step_size*i1+3);
+    /*notice that maximum struct
+     * int32_t d1 d2 d3 d4 -->xmm1
+     * int32_t d5 d6 d7 d8 -->xmm2
+     * Actually below are descriptors
+     */
     __m128i xmm1     = _mm_load_si128((__m128i*)(m1+step_size*i1+4));
     __m128i xmm2     = _mm_load_si128((__m128i*)(m1+step_size*i1+8));
+    //uint64_t* src = (uint64_t*)(m1+step_size*i1+4);
 
     float u_min,u_max,v_min,v_max;
 
@@ -1002,6 +1145,8 @@ inline void Matcher::findMatch (int32_t* m1,const int32_t &i1,int32_t* m2,const 
     }
 
     // if stereo search => constrain to 1d
+    // left --> right
+    // 因为左右匹配的时候其实应该是在带状里匹配
     if (!flow) {
         v_min = v1-param.match_disp_tolerance;
         v_max = v1+param.match_disp_tolerance;
@@ -1025,7 +1170,7 @@ inline void Matcher::findMatch (int32_t* m1,const int32_t &i1,int32_t* m2,const 
                     __m128i xmm4 = _mm_load_si128((__m128i*)(m2+step_size*(*i2_it)+8));
                     xmm3 = _mm_sad_epu8 (xmm1,xmm3);
                     xmm4 = _mm_sad_epu8 (xmm2,xmm4);
-                    xmm4 = _mm_add_epi16(xmm3,xmm4);
+                    xmm4 = _mm_add_epi16(xmm3,xmm4); //*SAD value*//
                     double cost = (double)(_mm_extract_epi16(xmm4,0)+_mm_extract_epi16(xmm4,4));
 
                     if (u_>=0 && v_>=0) {
@@ -1044,13 +1189,29 @@ inline void Matcher::findMatch (int32_t* m1,const int32_t &i1,int32_t* m2,const 
         }
     }
 }
+/**
+ * @brief Matcher::matching
+ * @param m1p maximum features in previous left image   (sparce or dense)
+ * @param m2p maximum features in previous right image  (sparce or dense)
+ * @param m1c maximum features in dense left image      (sparce or dense)
+ * @param m2c maximum features in dense right image     (sparce or dense)
+ * @param n1p number of features in previous left image
+ * @param n2p
+ * @param n1c
+ * @param n2c
+ * @param p_matched //this one is output
+ * @param method
+ * @param use_prior
+ * @param Tr_delta
+ */
 
 void Matcher::matching (int32_t *m1p,int32_t *m2p,int32_t *m1c,int32_t *m2c,
                         int32_t n1p,int32_t n2p,int32_t n1c,int32_t n2c,
                         vector<Matcher::p_match> &p_matched,int32_t method,bool use_prior,Matrix *Tr_delta) {
 
     // descriptor step size (number of int32_t elements in struct)
-    int32_t step_size = sizeof(Matcher::maximum)/sizeof(int32_t);
+    // F**k it
+    int32_t step_size = sizeof(Matcher::maximum)/sizeof(int32_t); //48
 
     // compute number of bins
     int32_t u_bin_num = (int32_t)ceil((float)dims_c[0]/(float)param.match_binsize);
@@ -1066,22 +1227,22 @@ void Matcher::matching (int32_t *m1p,int32_t *m2p,int32_t *m1c,int32_t *m2c,
     // loop variables
     int32_t* M = (int32_t*)calloc(dims_c[0]*dims_c[1],sizeof(int32_t));
     int32_t i1p,i2p,i1c,i2c,i1c2,i1p2;
-    int32_t u1p,v1p,u2p,v2p,u1c,v1c,u2c,v2c;
+    int32_t u1p,v1p,u2p,v2p,u1c,v1c,u2c,v2c; //actually this is the pixel value
 
     double t00,t01,t02,t03,t10,t11,t12,t13,t20,t21,t22,t23;
     if (Tr_delta) {
         t00 = Tr_delta->val[0][0];
         t01 = Tr_delta->val[0][1];
         t02 = Tr_delta->val[0][2];
-        t03 = Tr_delta->val[0][3];
+        t03 = Tr_delta->val[0][3];      //tx
         t10 = Tr_delta->val[1][0];
         t11 = Tr_delta->val[1][1];
         t12 = Tr_delta->val[1][2];
-        t13 = Tr_delta->val[1][3];
+        t13 = Tr_delta->val[1][3];      //ty
         t20 = Tr_delta->val[2][0];
         t21 = Tr_delta->val[2][1];
         t22 = Tr_delta->val[2][2];
-        t23 = Tr_delta->val[2][3];
+        t23 = Tr_delta->val[2][3];      //tz
     }
 
     /////////////////////////////////////////////////////
@@ -1171,6 +1332,8 @@ void Matcher::matching (int32_t *m1p,int32_t *m2p,int32_t *m1c,int32_t *m2c,
     } else {
 
         // create position/class bin index vectors
+        // output is k1p k2p k1c k2c
+        // actually I have not know how to match
         createIndexVector(m1p,n1p,k1p,u_bin_num,v_bin_num);
         createIndexVector(m2p,n2p,k2p,u_bin_num,v_bin_num);
         createIndexVector(m1c,n1c,k1c,u_bin_num,v_bin_num);
@@ -1186,9 +1349,14 @@ void Matcher::matching (int32_t *m1p,int32_t *m2p,int32_t *m1c,int32_t *m2c,
             // compute row and column of statistics bin to which this observation belongs
             int32_t u_bin = min((int32_t)floor((float)u1p/(float)param.match_binsize),u_bin_num-1);
             int32_t v_bin = min((int32_t)floor((float)v1p/(float)param.match_binsize),v_bin_num-1);
-            int32_t stat_bin = v_bin*u_bin_num+u_bin;
+            int32_t stat_bin = v_bin*u_bin_num+u_bin; //实际上又拍成了一维数
 
             // match in circle
+            /**
+             * @brief findMatch
+             * @output i2p --> match index in pixel value
+             * @kp2 is index
+             */
             findMatch(m1p,i1p,m2p,step_size,k2p,u_bin_num,v_bin_num,stat_bin,i2p, 0,false,use_prior);
 
             u2p = *(m2p+step_size*i2p+0);
@@ -1205,8 +1373,8 @@ void Matcher::matching (int32_t *m1p,int32_t *m2p,int32_t *m1c,int32_t *m2c,
                 double y2c = t10*x1p + t11*y1p + t12*z1p + t13;
                 double z2c = t20*x1p + t21*y1p + t22*z1p + t23;
 
-                double u2c_ = param.f*x2c/z2c+param.cu;
-                double v2c_ = param.f*y2c/z2c+param.cv;
+                double u2c_ = param.f*x2c/z2c+param.cu; //predict
+                double v2c_ = param.f*y2c/z2c+param.cv; //predict
 
                 findMatch(m2p,i2p,m2c,step_size,k2c,u_bin_num,v_bin_num,stat_bin,i2c, 1,true ,use_prior,u2c_,v2c_);
             } else {

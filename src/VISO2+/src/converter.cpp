@@ -145,12 +145,17 @@ std::vector<float> Converter::toQuaternion(const cv::Mat &M)
     return v;
 }
 
-uint8_t* Converter::toPng(const cv::Mat &image)
+uint8_t* Converter::toPng(cv::Mat image)
 {
     uint8_t* img_data = new uint8_t[image.rows*image.cols];
-    if(image.isContinuous())
+    int k = 0;
+    for(int v = 0; v < image.rows; v++)
     {
-        img_data = image.data;
+        for(int u = 0; u < image.cols; u++)
+        {
+            img_data[k] = (uint8_t)image.at<uchar>(v,u);
+            k++;
+        }
     }
 
     return img_data;
@@ -167,5 +172,18 @@ Sophus::SE3 Converter::toSE3(const cv::Mat &cvT)
     Sophus::SE3 SE3_Rt(R,t);
 
     return SE3_Rt;
+}
+
+cv::Mat Converter::toCvMat(const Matrix &pose)
+{
+    cv::Mat T = cv::Mat::eye(4,4,CV_64FC1);
+    for(int i = 0; i < 3; i++)
+    {
+        for(int j =0; j < 4; j++)
+        {
+            T.at<double>(i,j) = pose.val[i][j];
+        }
+    }
+    return T;
 }
 

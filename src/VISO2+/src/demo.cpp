@@ -77,7 +77,7 @@ int main (int argc, char** argv) {
     param.base     = 0.5372; // baseline in meters
 
     // init visual odometry
-    VisualOdometryStereo viso(param);
+    VisualOdometryStereo *viso = new VisualOdometryStereo(param);
 
     // current pose (this matrix transforms a point from the current
     // frame's camera coordinates to the first frame's camera coordinates)
@@ -122,7 +122,6 @@ int main (int argc, char** argv) {
         for (int32_t v=0; v<height; v++) {
             for (int32_t u=0; u<width; u++) {
                 left_img_data[k]  = left_img.get_pixel(u,v);
-
                 right_img_data[k] = right_img.get_pixel(u,v);
                 k++;
             }
@@ -135,13 +134,9 @@ int main (int argc, char** argv) {
         Mat imRight(imLeft.size(), CV_8UC1, right_img_data);
 
 
-
-
-
-
         // compute visual odometry
         int32_t dims[] = {width,height,width};
-        if (viso.process(left_img_data,right_img_data,dims)) {
+        if (viso->process(left_img_data,right_img_data,dims)) {
 
             //imshow("current",imLeft);
 
@@ -151,18 +146,21 @@ int main (int argc, char** argv) {
 //            std::vector<Matcher::maximum> featureDense = viso.matcher->getFeatureDense();
 //            cout << endl <<  "in demo.cpp " << "featureSparce.size= " << featureSparse.size() << endl;
 //            cout << endl <<  "in demo.cpp " << "featureDense.size = " << featureDense.size() << endl;
-//            waitKey(0);
 
 
-            Matrix Tcl = viso.getMotion();
+            waitKey(0);
+
+
+            Matrix Tcl = viso->getMotion();
             //cout << endl <<  "Tcl = " << endl <<  Tcl << endl;
             // on success, update current pose
-            pose = pose * Matrix::inv(viso.getMotion());
+            pose = pose * Matrix::inv(viso->getMotion());
 
             /*plot the right matchs add by zhong*/
             if(i > 2)
             {
-                std::vector<Matcher::p_match> featureMatchs = viso.getMatches();
+                std::vector<Matcher::p_match> featureMatchs = viso->getMatches();
+                cout << "matches size = " << featureMatchs.size() << endl;
                 cout << "run here" << endl;
                 //                    Mat currentFrame = drawFeatureMatches(imLeft,imRight,featureMatchs,0);
                 //                    Mat previousFrame = drawFeatureMatches(previous_imLeft,previous_imLeft,featureMatchs,1);
@@ -179,8 +177,8 @@ int main (int argc, char** argv) {
 
 
             // output some statistics
-            double num_matches = viso.getNumberOfMatches();
-            double num_inliers = viso.getNumberOfInliers();
+            double num_matches = viso->getNumberOfMatches();
+            double num_inliers = viso->getNumberOfInliers();
             cout << ", Matches: " << num_matches;
             cout << ", Inliers: " << 100.0*num_inliers/num_matches << " %" << ", Current pose: " << endl;
             cout << pose << endl << endl;

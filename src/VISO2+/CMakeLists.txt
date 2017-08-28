@@ -46,6 +46,13 @@ find_package(Pangolin REQUIRED)
 find_package( Sophus REQUIRED )
 include_directories( ${Sophus_INCLUDE_DIRS} )
 
+#g2o
+#SET( G2O_ROOT /usr/local/include/g2o )
+#FIND_PACKAGE( G2O REQUIRED )
+# CSparse
+#FIND_PACKAGE( CSparse REQUIRED )
+#INCLUDE_DIRECTORIES( ${G2O_INCLUDE_DIR} ${CSPARSE_INCLUDE_DIR} )
+
 include_directories(
 ${PROJECT_SOURCE_DIR}
 ${PROJECT_SOURCE_DIR}/include
@@ -72,6 +79,9 @@ add_library(${PROJECT_NAME} SHARED
     src/camera.cpp
     src/converter.cpp
     src/frame.cpp
+    src/tracking.cpp
+    src/map.cpp
+    src/mappoint.cpp
 
 )
 

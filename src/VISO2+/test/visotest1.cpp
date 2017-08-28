@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
     param.base = camera->b_;
 
 
-    VisualOdometryStereo viso(param);
+    VisualOdometryStereo *viso = new VisualOdometryStereo(param);
     Matrix pose = Matrix::eye(4);
     cout << dir << endl << param.calib.f << endl;
     waitKey(0);
@@ -45,18 +45,44 @@ int main(int argc, char *argv[])
         Mat Left = imread(left_img_file_name);
         Mat Right = imread(right_img_file_name);
         Frame currentFrame(i,camera,Left,Right);
+        cout << "current frame feature size = " << currentFrame.N_total << endl;
+        cout << "current frame feature circular size = " << currentFrame.N_circular << endl;
+        //imshow("current frame",currentFrame.mImgLeft);
 
-        if(viso.process(currentFrame.img_left_data,currentFrame.img_right_data,currentFrame.dims))
+
+        //matcher.matchFeatures(2);//method=2
+        //matcher.bucketFeatures(param.bucket.max_features,param.bucket.bucket_width,param.bucket.bucket_height);
+
+
+
+        cout << "Process :" << i << endl;
+
+        if(viso->process(currentFrame.mpimg_left_data,currentFrame.mpimg_right_data,currentFrame.dims))
         {
-            imshow("currentFrame",currentFrame.imLeft_);
-            std::vector<Matcher::p_match> featureMatchs = viso.getMatches();
+
+            std::vector<Matcher::p_match> featureMatchs = viso->getMatches();
             cout << "featureMatchs.size = " << featureMatchs.size() << endl;
-            pose = viso.getMotion();
+            pose = viso->getMotion();
             cout << "pose=\n" << pose << endl;
+            cout << endl << "new test " << endl;
+
+            cout << endl << "current left =" << viso->matcher->mvfeatureCurrentLeft.size() << endl;
+            cout << endl << "current right = " << viso->matcher->mvfeatureCurrentRight.size() << endl;
+            cout << endl << "previous left =" << viso->matcher->mvfeaturePreviousLeft.size() << endl;
+            cout << endl << "previous right = " << viso->matcher->mvfeaturePreviousRight.size() << endl;
+            cout << "$$$$pose: " << endl << viso->getMatches().size() << " " << viso->getMotion() << endl;
+
+            //cout << "featuresize = " << currentFrame.mpMatcher->getFeaturePrevious().size() << endl;
+//            std::vector <std::vector<Matcher::maximum>> featurePrevious = currentFrame.mpMatcher->getFeaturePrevious();
+//            std::vector<Matcher::maximum> sparseFeatures = featurePrevious[0];
+//            cout << "sparse feature = " << sparseFeatures.size() << endl;
+            imshow("currentFrame",currentFrame.mImgLeft);
+            cv::waitKey(0);
 
         }
 
-        waitKey(0);
+
+
 
 
     }
