@@ -25,13 +25,13 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 using namespace std;
 
 Reconstruction::Reconstruction () {
-  K = Matrix::eye(3);
+  K = Matrix_::eye(3);
 
   // First transformation matrix
-  Tr_total.push_back(Matrix::eye(4));
+  Tr_total.push_back(Matrix_::eye(4));
 
   // First inverse transformation matrix
-  Tr_inv_total.push_back(Matrix::eye(4));
+  Tr_inv_total.push_back(Matrix_::eye(4));
 }
 
 Reconstruction::~Reconstruction () {
@@ -39,10 +39,10 @@ Reconstruction::~Reconstruction () {
 
 void Reconstruction::setCalibration (FLOAT f,FLOAT cu,FLOAT cv) {
   FLOAT K_data[9]       = {f,0,cu,0,f,cv,0,0,1};
-  K                     = Matrix(3,3,K_data);
+  K                     = Matrix_(3,3,K_data);
   FLOAT cam_pitch       = -0.08;
   FLOAT cam_height      = 1.6;
-  Tr_cam_road           = Matrix(4,4);
+  Tr_cam_road           = Matrix_(4,4);
   Tr_cam_road.val[0][0] = 1;
   Tr_cam_road.val[1][1] = +cos(cam_pitch);
   Tr_cam_road.val[1][2] = -sin(cam_pitch);
@@ -53,20 +53,20 @@ void Reconstruction::setCalibration (FLOAT f,FLOAT cu,FLOAT cv) {
   Tr_cam_road.val[2][3] = 0;
 
   // First camera projection matrix
-  P_total.push_back(K*Matrix::eye(4).getMat(0,0,2,3));
+  P_total.push_back(K*Matrix_::eye(4).getMat(0,0,2,3));
 }
 
-void Reconstruction::update (vector<Matcher::p_match> p_matched,Matrix Tr,int32_t point_type,int32_t min_track_length,double max_dist,double min_angle) {
+void Reconstruction::update (vector<Matcher::p_match> p_matched,Matrix_ Tr,int32_t point_type,int32_t min_track_length,double max_dist,double min_angle) {
   
   // update transformation vector
-  Matrix Tr_total_curr;
-  if (Tr_total.size()==0) Tr_total_curr = Matrix::inv(Tr);
-  else                    Tr_total_curr = Tr_total.back()*Matrix::inv(Tr);
+  Matrix_ Tr_total_curr;
+  if (Tr_total.size()==0) Tr_total_curr = Matrix_::inv(Tr);
+  else                    Tr_total_curr = Tr_total.back()*Matrix_::inv(Tr);
   Tr_total.push_back(Tr_total_curr);
-  Tr_inv_total.push_back(Matrix::inv(Tr_total_curr));
+  Tr_inv_total.push_back(Matrix_::inv(Tr_total_curr));
   
   // update projection vector
-  Matrix P_total_curr = K*Matrix::inv(Tr_total_curr).getMat(0,0,2,3);
+  Matrix_ P_total_curr = K*Matrix_::inv(Tr_total_curr).getMat(0,0,2,3);
   P_total.push_back(P_total_curr);
   
   // current frame
@@ -153,16 +153,16 @@ void Reconstruction::update (vector<Matcher::p_match> p_matched,Matrix Tr,int32_
 bool Reconstruction::initPoint(const track &t,point3d &p) {
   
   // projection matrices
-  Matrix  P1 = P_total[t.first_frame];
-  Matrix  P2 = P_total[t.last_frame];
+  Matrix_  P1 = P_total[t.first_frame];
+  Matrix_  P2 = P_total[t.last_frame];
   
   // observations
   point2d p1 = t.pixels.front();
   point2d p2 = t.pixels.back();
   
   // triangulation via orthogonal regression
-  Matrix J(4,4);
-  Matrix U,S,V;
+  Matrix_ J(4,4);
+  Matrix_ U,S,V;
   for (int32_t j=0; j<4; j++) {
     J.val[0][j] = P1.val[2][j]*p1.u - P1.val[0][j];
     J.val[1][j] = P1.val[2][j]*p1.v - P1.val[1][j];
@@ -215,14 +215,14 @@ double Reconstruction::pointDistance(const track &t,point3d &p) {
 }
 
 double Reconstruction::rayAngle(const track &t,point3d &p) {
-  Matrix c1 = Tr_total[t.first_frame].getMat(0,3,2,3);
-  Matrix c2 = Tr_total[t.last_frame].getMat(0,3,2,3);
-  Matrix pt(3,1);
+  Matrix_ c1 = Tr_total[t.first_frame].getMat(0,3,2,3);
+  Matrix_ c2 = Tr_total[t.last_frame].getMat(0,3,2,3);
+  Matrix_ pt(3,1);
   pt.val[0][0] = p.x;
   pt.val[1][0] = p.y;
   pt.val[2][0] = p.z;
-  Matrix v1 = c1-pt;
-  Matrix v2 = c2-pt;
+  Matrix_ v1 = c1-pt;
+  Matrix_ v2 = c2-pt;
   FLOAT  n1 = v1.l2norm();
   FLOAT  n2 = v2.l2norm();
   if (n1<1e-10 || n2<1e-10)
@@ -235,14 +235,14 @@ double Reconstruction::rayAngle(const track &t,point3d &p) {
 int32_t Reconstruction::pointType(const track &t,point3d &p) {
   
   // project point to first and last camera coordinates
-  Matrix x(4,1);
+  Matrix_ x(4,1);
   x.val[0][0] = p.x;
   x.val[1][0] = p.y;
   x.val[2][0] = p.z;
   x.val[3][0] = 1;
-  Matrix x1c = Tr_inv_total[t.first_frame]*x;
-  Matrix x2c = Tr_inv_total[t.last_frame]*x;
-  Matrix x2r = Tr_cam_road*x2c;
+  Matrix_ x1c = Tr_inv_total[t.first_frame]*x;
+  Matrix_ x2c = Tr_inv_total[t.last_frame]*x;
+  Matrix_ x2r = Tr_cam_road*x2c;
   
   // point not visible
   if (x1c.val[2][0]<=1 || x2c.val[2][0]<=1)
@@ -269,15 +269,15 @@ Reconstruction::result Reconstruction::updatePoint(const track &t,point3d &p,con
   computeObservations(t.pixels);
   
   // compute predictions
-  vector<Matrix>::iterator P_begin = P_total.begin()+t.first_frame;
-  vector<Matrix>::iterator P_end   = P_begin+num_frames-1;
+  vector<Matrix_>::iterator P_begin = P_total.begin()+t.first_frame;
+  vector<Matrix_>::iterator P_end   = P_begin+num_frames-1;
   
   if (!computePredictionsAndJacobian(P_begin,P_end,p))
     return FAILED;
   
   // init
-  Matrix A(3,3);
-  Matrix B(3,1);
+  Matrix_ A(3,3);
+  Matrix_ B(3,1);
 
   // fill matrices A and B
   for (int32_t m=0; m<3; m++) {
@@ -313,11 +313,11 @@ void Reconstruction::computeObservations(const vector<point2d> &pixels) {
   }
 }
 
-bool Reconstruction::computePredictionsAndJacobian(const vector<Matrix>::iterator &P_begin,const vector<Matrix>::iterator &P_end,point3d &p) {
+bool Reconstruction::computePredictionsAndJacobian(const vector<Matrix_>::iterator &P_begin,const vector<Matrix_>::iterator &P_end,point3d &p) {
   
   // for all frames do
   int32_t k=0;
-  for (vector<Matrix>::iterator P=P_begin; P<=P_end; P++) {
+  for (vector<Matrix_>::iterator P=P_begin; P<=P_end; P++) {
     
     // precompute coefficients
     FLOAT a  = P->val[0][0]*p.x+P->val[0][1]*p.y+P->val[0][2]*p.z+P->val[0][3];
@@ -352,11 +352,11 @@ void Reconstruction::testJacobian() {
   cout << "=================================" << endl;
   cout << "TESTING JACOBIAN" << endl;
   FLOAT delta = 1e-5;
-  vector<Matrix> P;
-  Matrix A(3,4);
+  vector<Matrix_> P;
+  Matrix_ A(3,4);
   A.setMat(K,0,0);
   P.push_back(A);
-  A.setMat(Matrix::rotMatX(0.1)*Matrix::rotMatY(0.1)*Matrix::rotMatZ(0.1),0,0);
+  A.setMat(Matrix_::rotMatX(0.1)*Matrix_::rotMatY(0.1)*Matrix_::rotMatZ(0.1),0,0);
   A.val[1][3] = 1;
   A.val[1][3] = 0.1;
   A.val[1][3] = -1.5;

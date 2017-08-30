@@ -6,7 +6,12 @@
 #include "viso.h"
 #include "viso_stereo.h"
 #include <opencv2/features2d/features2d.hpp>
+#include <optimizer.h>
 
+
+class Frame;
+class Map;
+class MapPoint;
 class Tracking
 {
 public:
@@ -19,9 +24,18 @@ public:
 
     /*data members are below*/
     VOstate                 state_;                /*current vo status*/
-    Map::Ptr                map_;                  /*map with all frames and mappoints*/
     Frame                   ref_;                  /*reference frame*/
     Frame                   curr_;                 /*current frame*/
+    Frame                   last_;                 /*last frame*/
+    Map::Ptr                map_;                  /*map with all frames and mappoints*/
+
+    std::vector<MapPoint::Ptr> mvpLocalMapPoints;
+
+
+    int                     num_lost_;
+
+
+    float                   mThDepth;              /*Threshold close/far points*/
 
     int                     num_of_features_;      /*number of features*/
     double                  scale_factor_;         /*scale in image pyramid*/
@@ -43,26 +57,22 @@ public:
     Tracking();
     ~Tracking();
 
-    bool addFrame( Frame::Ptr frame );
+    bool addFrame(int id, Camera::Ptr camera, cv::Mat imLeft, cv::Mat imRight);
 
     /*functions are below*/
 public:
-
-    void extractKeyPoints();
-    void computeDescriptors();
-    void featureMatching();
-    void poseEstimationPnP();
-    void setRef3DPoints();
 
     void addKeyFrame();
     bool checkEstimatedPose();
     bool checkKeyFrame();
 
-    void addMapPoints();
+    void addLocalMapPoints();
     void optimizeMap();
     double getViewAngle( Frame::Ptr frame, MapPoint::Ptr point );
 
     void generateFrame(int id, Camera::Ptr camera, cv::Mat imLeft, cv::Mat imRight);
+
+    void trackLocalMap();
 
 
 

@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 
         if(currentFrame.mId > 3)
         {
-            for(int i = 0; i < 2; i++)
+            for(int i = 0; i < 10; i++)
             {
                 cout << left[i].i1c << " depth = " << currentFrame.mpCamera->bf_ / (left[i].u1c - left[i].u2c) << " " << "u= " << left[i].u1c << " v= " << left[i].v1c << "  ";
 

@@ -813,6 +813,7 @@ CMakeFiles/VISO2_PLUS.dir/src/frame.cpp.o: ../Thirdparty/g2o/g2o/types/types_sba
 CMakeFiles/VISO2_PLUS.dir/src/frame.cpp.o: ../Thirdparty/g2o/g2o/types/types_six_dof_expmap.h
 CMakeFiles/VISO2_PLUS.dir/src/frame.cpp.o: ../include/camera.h
 CMakeFiles/VISO2_PLUS.dir/src/frame.cpp.o: ../include/common_include.h
+CMakeFiles/VISO2_PLUS.dir/src/frame.cpp.o: ../include/config.h
 CMakeFiles/VISO2_PLUS.dir/src/frame.cpp.o: ../include/converter.h
 CMakeFiles/VISO2_PLUS.dir/src/frame.cpp.o: ../include/frame.h
 CMakeFiles/VISO2_PLUS.dir/src/frame.cpp.o: ../include/mappoint.h
@@ -1032,7 +1033,6 @@ CMakeFiles/VISO2_PLUS.dir/src/frame.cpp.o: /usr/local/lib/cmake/Pangolin/../../.
 CMakeFiles/VISO2_PLUS.dir/src/frame.cpp.o: /usr/local/lib/cmake/Pangolin/../../../include/opencv2/core/types_c.h
 CMakeFiles/VISO2_PLUS.dir/src/frame.cpp.o: /usr/local/lib/cmake/Pangolin/../../../include/opencv2/core/version.hpp
 CMakeFiles/VISO2_PLUS.dir/src/frame.cpp.o: /usr/local/lib/cmake/Pangolin/../../../include/opencv2/features2d/features2d.hpp
-CMakeFiles/VISO2_PLUS.dir/src/frame.cpp.o: /usr/local/lib/cmake/Pangolin/../../../include/opencv2/flann/config.h
 CMakeFiles/VISO2_PLUS.dir/src/frame.cpp.o: /usr/local/lib/cmake/Pangolin/../../../include/opencv2/flann/defines.h
 CMakeFiles/VISO2_PLUS.dir/src/frame.cpp.o: /usr/local/lib/cmake/Pangolin/../../../include/opencv2/flann/miniflann.hpp
 CMakeFiles/VISO2_PLUS.dir/src/frame.cpp.o: /usr/local/lib/cmake/Pangolin/../../../include/opencv2/highgui/highgui.hpp
@@ -1077,6 +1077,7 @@ CMakeFiles/VISO2_PLUS.dir/src/map.cpp.o: ../Thirdparty/g2o/g2o/types/types_sba.h
 CMakeFiles/VISO2_PLUS.dir/src/map.cpp.o: ../Thirdparty/g2o/g2o/types/types_six_dof_expmap.h
 CMakeFiles/VISO2_PLUS.dir/src/map.cpp.o: ../include/camera.h
 CMakeFiles/VISO2_PLUS.dir/src/map.cpp.o: ../include/common_include.h
+CMakeFiles/VISO2_PLUS.dir/src/map.cpp.o: ../include/config.h
 CMakeFiles/VISO2_PLUS.dir/src/map.cpp.o: ../include/converter.h
 CMakeFiles/VISO2_PLUS.dir/src/map.cpp.o: ../include/frame.h
 CMakeFiles/VISO2_PLUS.dir/src/map.cpp.o: ../include/map.h
@@ -1297,7 +1298,6 @@ CMakeFiles/VISO2_PLUS.dir/src/map.cpp.o: /usr/local/lib/cmake/Pangolin/../../../
 CMakeFiles/VISO2_PLUS.dir/src/map.cpp.o: /usr/local/lib/cmake/Pangolin/../../../include/opencv2/core/types_c.h
 CMakeFiles/VISO2_PLUS.dir/src/map.cpp.o: /usr/local/lib/cmake/Pangolin/../../../include/opencv2/core/version.hpp
 CMakeFiles/VISO2_PLUS.dir/src/map.cpp.o: /usr/local/lib/cmake/Pangolin/../../../include/opencv2/features2d/features2d.hpp
-CMakeFiles/VISO2_PLUS.dir/src/map.cpp.o: /usr/local/lib/cmake/Pangolin/../../../include/opencv2/flann/config.h
 CMakeFiles/VISO2_PLUS.dir/src/map.cpp.o: /usr/local/lib/cmake/Pangolin/../../../include/opencv2/flann/defines.h
 CMakeFiles/VISO2_PLUS.dir/src/map.cpp.o: /usr/local/lib/cmake/Pangolin/../../../include/opencv2/flann/miniflann.hpp
 CMakeFiles/VISO2_PLUS.dir/src/map.cpp.o: /usr/local/lib/cmake/Pangolin/../../../include/opencv2/highgui/highgui.hpp

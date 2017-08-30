@@ -92,7 +92,7 @@ public:
     // has failed. this is useful if you wish to linearly extrapolate occasional
     // frames for which no correspondences have been found
 
-    Matrix getMotion () { return Tr_delta; }
+    Matrix_ getMotion () { return Tr_delta; }
 
     // returns previous to current feature matches from internal matcher
     std::vector<Matcher::p_match> getMatches () { return matcher->getMatches(); }
@@ -115,7 +115,7 @@ public:
 
     // streams out the current transformation matrix Tr_delta
     friend std::ostream& operator<< (std::ostream &os,VisualOdometry &viso) {
-        Matrix p = viso.getMotion();
+        Matrix_ p = viso.getMotion();
         os << p.val[0][0] << " " << p.val[0][1] << " "  << p.val[0][2]  << " "  << p.val[0][3] << " ";
         os << p.val[1][0] << " " << p.val[1][1] << " "  << p.val[1][2]  << " "  << p.val[1][3] << " ";
         os << p.val[2][0] << " " << p.val[2][1] << " "  << p.val[2][2]  << " "  << p.val[2][3];
@@ -128,7 +128,7 @@ public:
     bool updateMotion ();
 
     // compute transformation matrix from transformation vector
-    Matrix transformationVectorToMatrix (std::vector<double> tr);
+    Matrix_ transformationVectorToMatrix (std::vector<double> tr);
 
     // compute motion from previous to current coordinate system
     // if motion could not be computed, resulting vector will be of size 0
@@ -137,7 +137,7 @@ public:
     // get random and unique sample of num numbers from 1:N
     std::vector<int32_t> getRandomSample (int32_t N,int32_t num);
 
-    Matrix                         Tr_delta;   // transformation (previous -> current frame)
+    Matrix_                         Tr_delta;   // transformation (previous -> current frame)
     bool                           Tr_valid;   // motion estimate exists or not
     Matcher                       *matcher;    // feature matcher
     std::vector<int32_t>           inliers;    // inlier set

@@ -339,6 +339,8 @@ stdint.h
 ../include/frame.h
 common_include.h
 ../include/common_include.h
+config.h
+../include/config.h
 camera.h
 ../include/camera.h
 viso_stereo.h

@@ -150,6 +150,19 @@ param_readtest/fast:
 .PHONY : param_readtest/fast
 
 #=============================================================================
+# Target rules for targets named visotest1
+
+# Build rule for target.
+visotest1: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 visotest1
+.PHONY : visotest1
+
+# fast build rule for target.
+visotest1/fast:
+	$(MAKE) -f test/CMakeFiles/visotest1.dir/build.make test/CMakeFiles/visotest1.dir/build
+.PHONY : visotest1/fast
+
+#=============================================================================
 # Target rules for targets named testvo2
 
 # Build rule for target.
@@ -163,17 +176,17 @@ testvo2/fast:
 .PHONY : testvo2/fast
 
 #=============================================================================
-# Target rules for targets named visotest1
+# Target rules for targets named testvo3
 
 # Build rule for target.
-visotest1: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 visotest1
-.PHONY : visotest1
+testvo3: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 testvo3
+.PHONY : testvo3
 
 # fast build rule for target.
-visotest1/fast:
-	$(MAKE) -f test/CMakeFiles/visotest1.dir/build.make test/CMakeFiles/visotest1.dir/build
-.PHONY : visotest1/fast
+testvo3/fast:
+	$(MAKE) -f test/CMakeFiles/testvo3.dir/build.make test/CMakeFiles/testvo3.dir/build
+.PHONY : testvo3/fast
 
 src/GroundTruth.o: src/GroundTruth.cpp.o
 
@@ -645,8 +658,9 @@ help:
 	@echo "... viso2_plus"
 	@echo "... VISO2_PLUS"
 	@echo "... param_readtest"
-	@echo "... testvo2"
 	@echo "... visotest1"
+	@echo "... testvo2"
+	@echo "... testvo3"
 	@echo "... src/GroundTruth.o"
 	@echo "... src/GroundTruth.i"
 	@echo "... src/GroundTruth.s"

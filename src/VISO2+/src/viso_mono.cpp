@@ -46,16 +46,16 @@ vector<double> VisualOdometryMono::estimateMotion (vector<Matcher::p_match> p_ma
    
   // create calibration matrix
   double K_data[9] = {param.calib.f,0,param.calib.cu,0,param.calib.f,param.calib.cv,0,0,1};
-  Matrix K(3,3,K_data);
+  Matrix_ K(3,3,K_data);
     
   // normalize feature points and return on errors
-  Matrix Tp,Tc;
+  Matrix_ Tp,Tc;
   vector<Matcher::p_match> p_matched_normalized = p_matched;
   if (!normalizeFeaturePoints(p_matched_normalized,Tp,Tc))
     return vector<double>();
 
   // initial RANSAC estimate of F
-  Matrix E,F;
+  Matrix_ E,F;
   inliers.clear();
   for (int32_t k=0;k<param.ransac_iters;k++) {
 
@@ -83,13 +83,13 @@ vector<double> VisualOdometryMono::estimateMotion (vector<Matcher::p_match> p_ma
   E = ~K*F*K;
   
   // re-enforce rank 2 constraint on essential matrix
-  Matrix U,W,V;
+  Matrix_ U,W,V;
   E.svd(U,W,V);
   W.val[2][0] = 0;
-  E = U*Matrix::diag(W)*~V;
+  E = U*Matrix_::diag(W)*~V;
   
   // compute 3d points X and R|t up to scale
-  Matrix X,R,t;
+  Matrix_ X,R,t;
   EtoRt(E,K,p_matched,X,R,t);
   
   // normalize 3d points and remove points behind image plane
@@ -98,7 +98,7 @@ vector<double> VisualOdometryMono::estimateMotion (vector<Matcher::p_match> p_ma
   for (int32_t i=0; i<X.n; i++)
     if (X.val[2][i]>0)
       pos_idx.push_back(i);
-  Matrix X_plane = X.extractCols(pos_idx);
+  Matrix_ X_plane = X.extractCols(pos_idx);
   
   // we need at least 10 points to proceed
   if (X_plane.n<10)
@@ -113,13 +113,13 @@ vector<double> VisualOdometryMono::estimateMotion (vector<Matcher::p_match> p_ma
     return vector<double>();
   
   // project features to 2d
-  Matrix x_plane(2,X_plane.n);
+  Matrix_ x_plane(2,X_plane.n);
   x_plane.setMat(X_plane.getMat(1,0,2,-1),0,0);
   
-  Matrix n(2,1);
+  Matrix_ n(2,1);
   n.val[0][0]       = cos(-param.pitch);
   n.val[1][0]       = sin(-param.pitch);
-  Matrix   d        = ~n*x_plane;
+  Matrix_   d        = ~n*x_plane;
   double   sigma    = median/50.0;
   double   weight   = 1.0/(2.0*sigma*sigma);
   double   best_sum = 0;
@@ -158,7 +158,7 @@ vector<double> VisualOdometryMono::estimateMotion (vector<Matcher::p_match> p_ma
   return tr_delta;
 }
 
-Matrix VisualOdometryMono::smallerThanMedian (Matrix &X,double &median) {
+Matrix_ VisualOdometryMono::smallerThanMedian (Matrix_ &X,double &median) {
   
   // set distance and index vector
   vector<double> dist;
@@ -176,14 +176,14 @@ Matrix VisualOdometryMono::smallerThanMedian (Matrix &X,double &median) {
   median = dist[idx[num_elem_half]];
   
   // create matrix containing elements closer than median
-  Matrix X_small(4,num_elem_half+1);
+  Matrix_ X_small(4,num_elem_half+1);
   for (int32_t j=0; j<=num_elem_half; j++)
     for (int32_t i=0; i<4; i++)
       X_small.val[i][j] = X.val[i][idx[j]];
 	return X_small;
 }
 
-bool VisualOdometryMono::normalizeFeaturePoints(vector<Matcher::p_match> &p_matched,Matrix &Tp,Matrix &Tc) {
+bool VisualOdometryMono::normalizeFeaturePoints(vector<Matcher::p_match> &p_matched,Matrix_ &Tp,Matrix_ &Tc) {
   
   // shift origins to centroids
   double cpu=0,cpv=0,ccu=0,ccv=0;
@@ -224,20 +224,20 @@ bool VisualOdometryMono::normalizeFeaturePoints(vector<Matcher::p_match> &p_matc
   // compute corresponding transformation matrices
   double Tp_data[9] = {sp,0,-sp*cpu,0,sp,-sp*cpv,0,0,1};
   double Tc_data[9] = {sc,0,-sc*ccu,0,sc,-sc*ccv,0,0,1};
-  Tp = Matrix(3,3,Tp_data);
-  Tc = Matrix(3,3,Tc_data);
+  Tp = Matrix_(3,3,Tp_data);
+  Tc = Matrix_(3,3,Tc_data);
   
   // return true on success
   return true;
 }
 
-void VisualOdometryMono::fundamentalMatrix (const vector<Matcher::p_match> &p_matched,const vector<int32_t> &active,Matrix &F) {
+void VisualOdometryMono::fundamentalMatrix (const vector<Matcher::p_match> &p_matched,const vector<int32_t> &active,Matrix_ &F) {
   
   // number of active p_matched
   int32_t N = active.size();
   
   // create constraint matrix A
-  Matrix A(N,9);
+  Matrix_ A(N,9);
   for (int32_t i=0; i<N; i++) {
     Matcher::p_match m = p_matched[active[i]];
     A.val[i][0] = m.u1c*m.u1p;
@@ -252,19 +252,19 @@ void VisualOdometryMono::fundamentalMatrix (const vector<Matcher::p_match> &p_ma
   }
    
   // compute singular value decomposition of A
-  Matrix U,W,V;
+  Matrix_ U,W,V;
   A.svd(U,W,V);
    
   // extract fundamental matrix from the column of V corresponding to the smallest singular value
-  F = Matrix::reshape(V.getMat(0,8,8,8),3,3);
+  F = Matrix_::reshape(V.getMat(0,8,8,8),3,3);
   
   // enforce rank 2
   F.svd(U,W,V);
   W.val[2][0] = 0;
-  F = U*Matrix::diag(W)*~V;
+  F = U*Matrix_::diag(W)*~V;
 }
 
-vector<int32_t> VisualOdometryMono::getInlier (vector<Matcher::p_match> &p_matched,Matrix &F) {
+vector<int32_t> VisualOdometryMono::getInlier (vector<Matcher::p_match> &p_matched,Matrix_ &F) {
 
   // extract fundamental matrix
   double f00 = F.val[0][0]; double f01 = F.val[0][1]; double f02 = F.val[0][2];
@@ -313,23 +313,23 @@ vector<int32_t> VisualOdometryMono::getInlier (vector<Matcher::p_match> &p_match
   return inliers;
 }
 
-void VisualOdometryMono::EtoRt(Matrix &E,Matrix &K,vector<Matcher::p_match> &p_matched,Matrix &X,Matrix &R,Matrix &t) {
+void VisualOdometryMono::EtoRt(Matrix_ &E,Matrix_ &K,vector<Matcher::p_match> &p_matched,Matrix_ &X,Matrix_ &R,Matrix_ &t) {
 
   // hartley matrices
   double W_data[9] = {0,-1,0,+1,0,0,0,0,1};
   double Z_data[9] = {0,+1,0,-1,0,0,0,0,0};
-  Matrix W(3,3,W_data);
-  Matrix Z(3,3,Z_data); 
+  Matrix_ W(3,3,W_data);
+  Matrix_ Z(3,3,Z_data); 
   
   // extract T,R1,R2 (8 solutions)
-  Matrix U,S,V;
+  Matrix_ U,S,V;
   E.svd(U,S,V);
-  Matrix T  = U*Z*~U;
-  Matrix Ra = U*W*(~V);
-  Matrix Rb = U*(~W)*(~V);
+  Matrix_ T  = U*Z*~U;
+  Matrix_ Ra = U*W*(~V);
+  Matrix_ Rb = U*(~W)*(~V);
   
   // convert T to t
-  t = Matrix(3,1);
+  t = Matrix_(3,1);
   t.val[0][0] = T.val[2][1];
   t.val[1][0] = T.val[0][2];
   t.val[2][0] = T.val[1][0];
@@ -339,15 +339,15 @@ void VisualOdometryMono::EtoRt(Matrix &E,Matrix &K,vector<Matcher::p_match> &p_m
   if (Rb.det()<0) Rb = -Rb;
   
   // create vector containing all 4 solutions
-  vector<Matrix> R_vec;
-  vector<Matrix> t_vec;
+  vector<Matrix_> R_vec;
+  vector<Matrix_> t_vec;
   R_vec.push_back(Ra); t_vec.push_back( t);
   R_vec.push_back(Ra); t_vec.push_back(-t);
   R_vec.push_back(Rb); t_vec.push_back( t);
   R_vec.push_back(Rb); t_vec.push_back(-t);
   
   // try all 4 solutions
-  Matrix X_curr;
+  Matrix_ X_curr;
   int32_t max_inliers = 0;
   for (int32_t i=0; i<4; i++) {
     int32_t num_inliers = triangulateChieral(p_matched,K,R_vec[i],t_vec[i],X_curr);
@@ -360,22 +360,22 @@ void VisualOdometryMono::EtoRt(Matrix &E,Matrix &K,vector<Matcher::p_match> &p_m
   }
 }
 
-int32_t VisualOdometryMono::triangulateChieral (vector<Matcher::p_match> &p_matched,Matrix &K,Matrix &R,Matrix &t,Matrix &X) {
+int32_t VisualOdometryMono::triangulateChieral (vector<Matcher::p_match> &p_matched,Matrix_ &K,Matrix_ &R,Matrix_ &t,Matrix_ &X) {
   
   // init 3d point matrix
-  X = Matrix(4,p_matched.size());
+  X = Matrix_(4,p_matched.size());
   
   // projection matrices
-  Matrix P1(3,4);
-  Matrix P2(3,4);
+  Matrix_ P1(3,4);
+  Matrix_ P2(3,4);
   P1.setMat(K,0,0);
   P2.setMat(R,0,0);
   P2.setMat(t,0,3);
   P2 = K*P2;
   
   // triangulation via orthogonal regression
-  Matrix J(4,4);
-  Matrix U,S,V;
+  Matrix_ J(4,4);
+  Matrix_ U,S,V;
   for (int32_t i=0; i<(int)p_matched.size(); i++) {
     for (int32_t j=0; j<4; j++) {
       J.val[0][j] = P1.val[2][j]*p_matched[i].u1p - P1.val[0][j];
@@ -388,8 +388,8 @@ int32_t VisualOdometryMono::triangulateChieral (vector<Matcher::p_match> &p_matc
   }
   
   // compute inliers
-  Matrix  AX1 = P1*X;
-  Matrix  BX1 = P2*X;
+  Matrix_  AX1 = P1*X;
+  Matrix_  BX1 = P2*X;
   int32_t num = 0;
   for (int32_t i=0; i<X.n; i++)
     if (AX1.val[2][i]*X.val[3][i]>0 && BX1.val[2][i]*X.val[3][i]>0)

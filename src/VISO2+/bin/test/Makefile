@@ -126,6 +126,21 @@ param_readtest/fast:
 .PHONY : param_readtest/fast
 
 # Convenience name for target.
+test/CMakeFiles/visotest1.dir/rule:
+	cd /home/m/ws_orb2/src/VISO2+/bin && $(MAKE) -f CMakeFiles/Makefile2 test/CMakeFiles/visotest1.dir/rule
+.PHONY : test/CMakeFiles/visotest1.dir/rule
+
+# Convenience name for target.
+visotest1: test/CMakeFiles/visotest1.dir/rule
+
+.PHONY : visotest1
+
+# fast build rule for target.
+visotest1/fast:
+	cd /home/m/ws_orb2/src/VISO2+/bin && $(MAKE) -f test/CMakeFiles/visotest1.dir/build.make test/CMakeFiles/visotest1.dir/build
+.PHONY : visotest1/fast
+
+# Convenience name for target.
 test/CMakeFiles/testvo2.dir/rule:
 	cd /home/m/ws_orb2/src/VISO2+/bin && $(MAKE) -f CMakeFiles/Makefile2 test/CMakeFiles/testvo2.dir/rule
 .PHONY : test/CMakeFiles/testvo2.dir/rule
@@ -141,19 +156,19 @@ testvo2/fast:
 .PHONY : testvo2/fast
 
 # Convenience name for target.
-test/CMakeFiles/visotest1.dir/rule:
-	cd /home/m/ws_orb2/src/VISO2+/bin && $(MAKE) -f CMakeFiles/Makefile2 test/CMakeFiles/visotest1.dir/rule
-.PHONY : test/CMakeFiles/visotest1.dir/rule
+test/CMakeFiles/testvo3.dir/rule:
+	cd /home/m/ws_orb2/src/VISO2+/bin && $(MAKE) -f CMakeFiles/Makefile2 test/CMakeFiles/testvo3.dir/rule
+.PHONY : test/CMakeFiles/testvo3.dir/rule
 
 # Convenience name for target.
-visotest1: test/CMakeFiles/visotest1.dir/rule
+testvo3: test/CMakeFiles/testvo3.dir/rule
 
-.PHONY : visotest1
+.PHONY : testvo3
 
 # fast build rule for target.
-visotest1/fast:
-	cd /home/m/ws_orb2/src/VISO2+/bin && $(MAKE) -f test/CMakeFiles/visotest1.dir/build.make test/CMakeFiles/visotest1.dir/build
-.PHONY : visotest1/fast
+testvo3/fast:
+	cd /home/m/ws_orb2/src/VISO2+/bin && $(MAKE) -f test/CMakeFiles/testvo3.dir/build.make test/CMakeFiles/testvo3.dir/build
+.PHONY : testvo3/fast
 
 param_readtest.o: param_readtest.cpp.o
 
@@ -209,6 +224,33 @@ testvo2.cpp.s:
 	cd /home/m/ws_orb2/src/VISO2+/bin && $(MAKE) -f test/CMakeFiles/testvo2.dir/build.make test/CMakeFiles/testvo2.dir/testvo2.cpp.s
 .PHONY : testvo2.cpp.s
 
+testvo3.o: testvo3.cpp.o
+
+.PHONY : testvo3.o
+
+# target to build an object file
+testvo3.cpp.o:
+	cd /home/m/ws_orb2/src/VISO2+/bin && $(MAKE) -f test/CMakeFiles/testvo3.dir/build.make test/CMakeFiles/testvo3.dir/testvo3.cpp.o
+.PHONY : testvo3.cpp.o
+
+testvo3.i: testvo3.cpp.i
+
+.PHONY : testvo3.i
+
+# target to preprocess a source file
+testvo3.cpp.i:
+	cd /home/m/ws_orb2/src/VISO2+/bin && $(MAKE) -f test/CMakeFiles/testvo3.dir/build.make test/CMakeFiles/testvo3.dir/testvo3.cpp.i
+.PHONY : testvo3.cpp.i
+
+testvo3.s: testvo3.cpp.s
+
+.PHONY : testvo3.s
+
+# target to generate assembly for a file
+testvo3.cpp.s:
+	cd /home/m/ws_orb2/src/VISO2+/bin && $(MAKE) -f test/CMakeFiles/testvo3.dir/build.make test/CMakeFiles/testvo3.dir/testvo3.cpp.s
+.PHONY : testvo3.cpp.s
+
 visotest1.o: visotest1.cpp.o
 
 .PHONY : visotest1.o
@@ -244,15 +286,19 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... param_readtest"
-	@echo "... testvo2"
 	@echo "... rebuild_cache"
 	@echo "... visotest1"
+	@echo "... testvo2"
+	@echo "... testvo3"
 	@echo "... param_readtest.o"
 	@echo "... param_readtest.i"
 	@echo "... param_readtest.s"
 	@echo "... testvo2.o"
 	@echo "... testvo2.i"
 	@echo "... testvo2.s"
+	@echo "... testvo3.o"
+	@echo "... testvo3.i"
+	@echo "... testvo3.s"
 	@echo "... visotest1.o"
 	@echo "... visotest1.i"
 	@echo "... visotest1.s"

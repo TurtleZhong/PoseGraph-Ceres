@@ -37,17 +37,17 @@ static int32_t iminarg1,iminarg2;
 
 using namespace std;
 
-Matrix::Matrix () {
+Matrix_::Matrix_ () {
   m   = 0;
   n   = 0;
   val = 0;
 }
 
-Matrix::Matrix (const int32_t m_,const int32_t n_) {
+Matrix_::Matrix_ (const int32_t m_,const int32_t n_) {
   allocateMemory(m_,n_);
 }
 
-Matrix::Matrix (const int32_t m_,const int32_t n_,const FLOAT* val_) {
+Matrix_::Matrix_ (const int32_t m_,const int32_t n_,const FLOAT* val_) {
   allocateMemory(m_,n_);
   int32_t k=0;
   for (int32_t i=0; i<m_; i++)
@@ -55,17 +55,17 @@ Matrix::Matrix (const int32_t m_,const int32_t n_,const FLOAT* val_) {
       val[i][j] = val_[k++];
 }
 
-Matrix::Matrix (const Matrix &M) {
+Matrix_::Matrix_ (const Matrix_ &M) {
   allocateMemory(M.m,M.n);
   for (int32_t i=0; i<M.m; i++)
     memcpy(val[i],M.val[i],M.n*sizeof(FLOAT));
 }
 
-Matrix::~Matrix () {
+Matrix_::~Matrix_ () {
   releaseMemory();
 }
 
-Matrix& Matrix::operator= (const Matrix &M) {
+Matrix_& Matrix_::operator= (const Matrix_ &M) {
   if (this!=&M) {
     if (M.m!=m || M.n!=n) {
       releaseMemory();
@@ -78,7 +78,7 @@ Matrix& Matrix::operator= (const Matrix &M) {
   return *this;
 }
 
-void Matrix::getData(FLOAT* val_,int32_t i1,int32_t j1,int32_t i2,int32_t j2) {
+void Matrix_::getData(FLOAT* val_,int32_t i1,int32_t j1,int32_t i2,int32_t j2) {
   if (i2==-1) i2 = m-1;
   if (j2==-1) j2 = n-1;
   int32_t k=0;
@@ -87,7 +87,7 @@ void Matrix::getData(FLOAT* val_,int32_t i1,int32_t j1,int32_t i2,int32_t j2) {
       val_[k++] = val[i][j];
 }
 
-Matrix Matrix::getMat(int32_t i1,int32_t j1,int32_t i2,int32_t j2) {
+Matrix_ Matrix_::getMat(int32_t i1,int32_t j1,int32_t i2,int32_t j2) {
   if (i2==-1) i2 = m-1;
   if (j2==-1) j2 = n-1;
   if (i1<0 || i2>=m || j1<0 || j2>=n || i2<i1 || j2<j1) {
@@ -96,14 +96,14 @@ Matrix Matrix::getMat(int32_t i1,int32_t j1,int32_t i2,int32_t j2) {
         " of a (" << m << "x" << n << ") matrix." << endl;
     exit(0);
   }
-  Matrix M(i2-i1+1,j2-j1+1);
+  Matrix_ M(i2-i1+1,j2-j1+1);
   for (int32_t i=0; i<M.m; i++)
     for (int32_t j=0; j<M.n; j++)
       M.val[i][j] = val[i1+i][j1+j];
   return M;
 }
 
-void Matrix::setMat(const Matrix &M,const int32_t i1,const int32_t j1) {
+void Matrix_::setMat(const Matrix_ &M,const int32_t i1,const int32_t j1) {
   if (i1<0 || j1<0 || i1+M.m>m || j1+M.n>n) {
     cerr << "ERROR: Cannot set submatrix [" << i1 << ".." << i1+M.m-1 <<
         "] x [" << j1 << ".." << j1+M.n-1 << "]" <<
@@ -115,7 +115,7 @@ void Matrix::setMat(const Matrix &M,const int32_t i1,const int32_t j1) {
       val[i1+i][j1+j] = M.val[i][j];
 }
 
-void Matrix::setVal(FLOAT s,int32_t i1,int32_t j1,int32_t i2,int32_t j2) {
+void Matrix_::setVal(FLOAT s,int32_t i1,int32_t j1,int32_t i2,int32_t j2) {
   if (i2==-1) i2 = m-1;
   if (j2==-1) j2 = n-1;
   if (i2<i1 || j2<j1) {
@@ -127,18 +127,18 @@ void Matrix::setVal(FLOAT s,int32_t i1,int32_t j1,int32_t i2,int32_t j2) {
       val[i][j] = s;
 }
 
-void Matrix::setDiag(FLOAT s,int32_t i1,int32_t i2) {
+void Matrix_::setDiag(FLOAT s,int32_t i1,int32_t i2) {
   if (i2==-1) i2 = min(m-1,n-1);
   for (int32_t i=i1; i<=i2; i++)
     val[i][i] = s;
 }
 
-void Matrix::zero() {
+void Matrix_::zero() {
   setVal(0);
 }
 
-Matrix Matrix::extractCols (vector<int> idx) {
-  Matrix M(m,idx.size());
+Matrix_ Matrix_::extractCols (vector<int> idx) {
+  Matrix_ M(m,idx.size());
   for (int32_t j=0; j<M.n; j++)
     if (idx[j]<n)
       for (int32_t i=0; i<m; i++)
@@ -146,14 +146,14 @@ Matrix Matrix::extractCols (vector<int> idx) {
   return M;
 }
 
-Matrix Matrix::eye (const int32_t m) {
-  Matrix M(m,m);
+Matrix_ Matrix_::eye (const int32_t m) {
+  Matrix_ M(m,m);
   for (int32_t i=0; i<m; i++)
     M.val[i][i] = 1;
   return M;
 }
 
-void Matrix::eye () {
+void Matrix_::eye () {
   for (int32_t i=0; i<m; i++)
     for (int32_t j=0; j<n; j++)
       val[i][j] = 0;
@@ -161,14 +161,14 @@ void Matrix::eye () {
     val[i][i] = 1;
 }
 
-Matrix Matrix::diag (const Matrix &M) {
+Matrix_ Matrix_::diag (const Matrix_ &M) {
   if (M.m>1 && M.n==1) {
-    Matrix D(M.m,M.m);
+    Matrix_ D(M.m,M.m);
     for (int32_t i=0; i<M.m; i++)
       D.val[i][i] = M.val[i][0];
     return D;
   } else if (M.m==1 && M.n>1) {
-    Matrix D(M.n,M.n);
+    Matrix_ D(M.n,M.n);
     for (int32_t i=0; i<M.n; i++)
       D.val[i][i] = M.val[0][i];
     return D;
@@ -177,13 +177,13 @@ Matrix Matrix::diag (const Matrix &M) {
   exit(0);
 }
 
-Matrix Matrix::reshape(const Matrix &M,int32_t m_,int32_t n_) {
+Matrix_ Matrix_::reshape(const Matrix_ &M,int32_t m_,int32_t n_) {
   if (M.m*M.n != m_*n_) {
     cerr << "ERROR: Trying to reshape a matrix of size (" << M.m << "x" << M.n <<
             ") to size (" << m_ << "x" << n_ << ")" << endl;
     exit(0);
   }
-  Matrix M2(m_,n_);
+  Matrix_ M2(m_,n_);
   for (int32_t k=0; k<m_*n_; k++) {
     int32_t i1 = k/M.n;
     int32_t j1 = k%M.n;
@@ -194,10 +194,10 @@ Matrix Matrix::reshape(const Matrix &M,int32_t m_,int32_t n_) {
   return M2;
 }
 
-Matrix Matrix::rotMatX (const FLOAT &angle) {
+Matrix_ Matrix_::rotMatX (const FLOAT &angle) {
   FLOAT s = sin(angle);
   FLOAT c = cos(angle);
-  Matrix R(3,3);
+  Matrix_ R(3,3);
   R.val[0][0] = +1;
   R.val[1][1] = +c;
   R.val[1][2] = -s;
@@ -206,10 +206,10 @@ Matrix Matrix::rotMatX (const FLOAT &angle) {
   return R;
 }
 
-Matrix Matrix::rotMatY (const FLOAT &angle) {
+Matrix_ Matrix_::rotMatY (const FLOAT &angle) {
   FLOAT s = sin(angle);
   FLOAT c = cos(angle);
-  Matrix R(3,3);
+  Matrix_ R(3,3);
   R.val[0][0] = +c;
   R.val[0][2] = +s;
   R.val[1][1] = +1;
@@ -218,10 +218,10 @@ Matrix Matrix::rotMatY (const FLOAT &angle) {
   return R;
 }
 
-Matrix Matrix::rotMatZ (const FLOAT &angle) {
+Matrix_ Matrix_::rotMatZ (const FLOAT &angle) {
   FLOAT s = sin(angle);
   FLOAT c = cos(angle);
-  Matrix R(3,3);
+  Matrix_ R(3,3);
   R.val[0][0] = +c;
   R.val[0][1] = -s;
   R.val[1][0] = +s;
@@ -230,45 +230,45 @@ Matrix Matrix::rotMatZ (const FLOAT &angle) {
   return R;
 }
 
-Matrix Matrix::operator+ (const Matrix &M) {
-  const Matrix &A = *this;
-  const Matrix &B = M;
+Matrix_ Matrix_::operator+ (const Matrix_ &M) {
+  const Matrix_ &A = *this;
+  const Matrix_ &B = M;
   if (A.m!=B.m || A.n!=B.n) {
     cerr << "ERROR: Trying to add matrices of size (" << A.m << "x" << A.n <<
         ") and (" << B.m << "x" << B.n << ")" << endl;
     exit(0);
   }
-  Matrix C(A.m,A.n);
+  Matrix_ C(A.m,A.n);
   for (int32_t i=0; i<m; i++)
     for (int32_t j=0; j<n; j++)
       C.val[i][j] = A.val[i][j]+B.val[i][j];
   return C;
 }
 
-Matrix Matrix::operator- (const Matrix &M) {
-  const Matrix &A = *this;
-  const Matrix &B = M;
+Matrix_ Matrix_::operator- (const Matrix_ &M) {
+  const Matrix_ &A = *this;
+  const Matrix_ &B = M;
   if (A.m!=B.m || A.n!=B.n) {
     cerr << "ERROR: Trying to subtract matrices of size (" << A.m << "x" << A.n <<
         ") and (" << B.m << "x" << B.n << ")" << endl;
     exit(0);
   }
-  Matrix C(A.m,A.n);
+  Matrix_ C(A.m,A.n);
   for (int32_t i=0; i<m; i++)
     for (int32_t j=0; j<n; j++)
       C.val[i][j] = A.val[i][j]-B.val[i][j];
   return C;
 }
 
-Matrix Matrix::operator* (const Matrix &M) {
-  const Matrix &A = *this;
-  const Matrix &B = M;
+Matrix_ Matrix_::operator* (const Matrix_ &M) {
+  const Matrix_ &A = *this;
+  const Matrix_ &B = M;
   if (A.n!=B.m) {
     cerr << "ERROR: Trying to multiply matrices of size (" << A.m << "x" << A.n <<
         ") and (" << B.m << "x" << B.n << ")" << endl;
     exit(0);
   }
-  Matrix C(A.m,B.n);
+  Matrix_ C(A.m,B.n);
   for (int32_t i=0; i<A.m; i++)
     for (int32_t j=0; j<B.n; j++)
       for (int32_t k=0; k<A.n; k++)
@@ -276,20 +276,20 @@ Matrix Matrix::operator* (const Matrix &M) {
   return C;
 }
 
-Matrix Matrix::operator* (const FLOAT &s) {
-  Matrix C(m,n);
+Matrix_ Matrix_::operator* (const FLOAT &s) {
+  Matrix_ C(m,n);
   for (int32_t i=0; i<m; i++)
     for (int32_t j=0; j<n; j++)
       C.val[i][j] = val[i][j]*s;
   return C;
 }
 
-Matrix Matrix::operator/ (const Matrix &M) {
-  const Matrix &A = *this;
-  const Matrix &B = M;
+Matrix_ Matrix_::operator/ (const Matrix_ &M) {
+  const Matrix_ &A = *this;
+  const Matrix_ &B = M;
   
   if (A.m==B.m && A.n==B.n) {
-    Matrix C(A.m,A.n);
+    Matrix_ C(A.m,A.n);
     for (int32_t i=0; i<A.m; i++)
       for (int32_t j=0; j<A.n; j++)
         if (B.val[i][j]!=0)
@@ -297,7 +297,7 @@ Matrix Matrix::operator/ (const Matrix &M) {
     return C;
     
   } else if (A.m==B.m && B.n==1) {
-    Matrix C(A.m,A.n);
+    Matrix_ C(A.m,A.n);
     for (int32_t i=0; i<A.m; i++)
       for (int32_t j=0; j<A.n; j++)
         if (B.val[i][0]!=0)
@@ -305,7 +305,7 @@ Matrix Matrix::operator/ (const Matrix &M) {
     return C;
     
   } else if (A.n==B.n && B.m==1) {
-    Matrix C(A.m,A.n);
+    Matrix_ C(A.m,A.n);
     for (int32_t i=0; i<A.m; i++)
       for (int32_t j=0; j<A.n; j++)
         if (B.val[0][j]!=0)
@@ -319,35 +319,35 @@ Matrix Matrix::operator/ (const Matrix &M) {
   } 
 }
 
-Matrix Matrix::operator/ (const FLOAT &s) {
+Matrix_ Matrix_::operator/ (const FLOAT &s) {
   if (fabs(s)<1e-20) {
     cerr << "ERROR: Trying to divide by zero!" << endl;
     exit(0);
   }
-  Matrix C(m,n);
+  Matrix_ C(m,n);
   for (int32_t i=0; i<m; i++)
     for (int32_t j=0; j<n; j++)
       C.val[i][j] = val[i][j]/s;
   return C;
 }
 
-Matrix Matrix::operator- () {
-  Matrix C(m,n);
+Matrix_ Matrix_::operator- () {
+  Matrix_ C(m,n);
   for (int32_t i=0; i<m; i++)
     for (int32_t j=0; j<n; j++)
       C.val[i][j] = -val[i][j];
   return C;
 }
 
-Matrix Matrix::operator~ () {
-  Matrix C(n,m);
+Matrix_ Matrix_::operator~ () {
+  Matrix_ C(n,m);
   for (int32_t i=0; i<m; i++)
     for (int32_t j=0; j<n; j++)
       C.val[j][i] = val[i][j];
   return C;
 }
 
-FLOAT Matrix::l2norm () {
+FLOAT Matrix_::l2norm () {
   FLOAT norm = 0;
   for (int32_t i=0; i<m; i++)
     for (int32_t j=0; j<n; j++)
@@ -355,7 +355,7 @@ FLOAT Matrix::l2norm () {
   return sqrt(norm);
 }
 
-FLOAT Matrix::mean () {
+FLOAT Matrix_::mean () {
   FLOAT mean = 0;
   for (int32_t i=0; i<m; i++)
     for (int32_t j=0; j<n; j++)
@@ -363,48 +363,48 @@ FLOAT Matrix::mean () {
   return mean/(FLOAT)(m*n);
 }
 
-Matrix Matrix::cross (const Matrix &a, const Matrix &b) {
+Matrix_ Matrix_::cross (const Matrix_ &a, const Matrix_ &b) {
   if (a.m!=3 || a.n!=1 || b.m!=3 || b.n!=1) {
     cerr << "ERROR: Cross product vectors must be of size (3x1)" << endl;
     exit(0);
   }
-  Matrix c(3,1);
+  Matrix_ c(3,1);
   c.val[0][0] = a.val[1][0]*b.val[2][0]-a.val[2][0]*b.val[1][0];
   c.val[1][0] = a.val[2][0]*b.val[0][0]-a.val[0][0]*b.val[2][0];
   c.val[2][0] = a.val[0][0]*b.val[1][0]-a.val[1][0]*b.val[0][0];
   return c;
 }
 
-Matrix Matrix::inv (const Matrix &M) {
+Matrix_ Matrix_::inv (const Matrix_ &M) {
   if (M.m!=M.n) {
     cerr << "ERROR: Trying to invert matrix of size (" << M.m << "x" << M.n << ")" << endl;
     exit(0);
   }
-  Matrix A(M);
-  Matrix B = eye(M.m);
+  Matrix_ A(M);
+  Matrix_ B = eye(M.m);
   B.solve(A);
   return B;
 }
 
-bool Matrix::inv () {
+bool Matrix_::inv () {
   if (m!=n) {
     cerr << "ERROR: Trying to invert matrix of size (" << m << "x" << n << ")" << endl;
     exit(0);
   }
-  Matrix A(*this);
+  Matrix_ A(*this);
   eye();
   solve(A);
   return true;
 }
 
-FLOAT Matrix::det () {
+FLOAT Matrix_::det () {
   
   if (m != n) {
     cerr << "ERROR: Trying to compute determinant of a matrix of size (" << m << "x" << n << ")" << endl;
     exit(0);
   }
     
-  Matrix A(*this);
+  Matrix_ A(*this);
   int32_t *idx = (int32_t*)malloc(m*sizeof(int32_t));
   FLOAT d = 1;
   A.lu(idx,d);
@@ -414,11 +414,11 @@ FLOAT Matrix::det () {
   return d;
 }
 
-bool Matrix::solve (const Matrix &M, FLOAT eps) {
+bool Matrix_::solve (const Matrix_ &M, FLOAT eps) {
   
   // substitutes
-  const Matrix &A = M;
-  Matrix &B       = *this;
+  const Matrix_ &A = M;
+  Matrix_ &B       = *this;
   
   if (A.m != A.n || A.m != B.m || A.m<1 || B.n<1) {
     cerr << "ERROR: Trying to eliminate matrices of size (" << A.m << "x" << A.n <<
@@ -511,7 +511,7 @@ bool Matrix::solve (const Matrix &M, FLOAT eps) {
 // or odd, respectively. This routine is used in combination with lubksb to solve linear equations
 // or invert a matrix.
 
-bool Matrix::lu(int32_t *idx, FLOAT &d, FLOAT eps) {
+bool Matrix_::lu(int32_t *idx, FLOAT &d, FLOAT eps) {
   
   if (m != n) {
     cerr << "ERROR: Trying to LU decompose a matrix of size (" << m << "x" << n << ")" << endl;
@@ -576,11 +576,11 @@ bool Matrix::lu(int32_t *idx, FLOAT &d, FLOAT eps) {
 // Given a matrix M/A[1..m][1..n], this routine computes its singular value decomposition, M/A =
 // U·W·V T. Thematrix U replaces a on output. The diagonal matrix of singular values W is output
 // as a vector w[1..n]. Thematrix V (not the transpose V T ) is output as v[1..n][1..n].
-void Matrix::svd(Matrix &U2,Matrix &W,Matrix &V) {
+void Matrix_::svd(Matrix_ &U2,Matrix_ &W,Matrix_ &V) {
 
-  Matrix U = Matrix(*this);
-  U2 = Matrix(m,m);
-  V  = Matrix(n,n);
+  Matrix_ U = Matrix_(*this);
+  U2 = Matrix_(m,m);
+  V  = Matrix_(n,n);
 
   FLOAT* w   = (FLOAT*)malloc(n*sizeof(FLOAT));
   FLOAT* rv1 = (FLOAT*)malloc(n*sizeof(FLOAT));
@@ -794,7 +794,7 @@ void Matrix::svd(Matrix &U2,Matrix &W,Matrix &V) {
   }
 
   // create vector and copy singular values
-  W = Matrix(min(m,n),1,w);
+  W = Matrix_(min(m,n),1,w);
   
   // extract mxm submatrix U
   U2.setMat(U.getMat(0,0,m-1,min(m-1,n-1)),0,0);
@@ -806,7 +806,7 @@ void Matrix::svd(Matrix &U2,Matrix &W,Matrix &V) {
   free(sv);
 }
 
-ostream& operator<< (ostream& out,const Matrix& M) {
+ostream& operator<< (ostream& out,const Matrix_& M) {
   if (M.m==0 || M.n==0) {
     out << "[empty matrix]";
   } else {
@@ -823,7 +823,7 @@ ostream& operator<< (ostream& out,const Matrix& M) {
   return out;
 }
 
-void Matrix::allocateMemory (const int32_t m_,const int32_t n_) {
+void Matrix_::allocateMemory (const int32_t m_,const int32_t n_) {
   m = abs(m_); n = abs(n_);
   if (m==0 || n==0) {
     val = 0;
@@ -835,14 +835,14 @@ void Matrix::allocateMemory (const int32_t m_,const int32_t n_) {
     val[i] = val[i-1]+n;
 }
 
-void Matrix::releaseMemory () {
+void Matrix_::releaseMemory () {
   if (val!=0) {
     free(val[0]);
     free(val);
   }
 }
 
-FLOAT Matrix::pythag(FLOAT a,FLOAT b) {
+FLOAT Matrix_::pythag(FLOAT a,FLOAT b) {
   FLOAT absa,absb;
   absa = fabs(a);
   absb = fabs(b);

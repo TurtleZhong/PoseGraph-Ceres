@@ -41,7 +41,7 @@ bool VisualOdometryStereo::process (uint8_t *I1,uint8_t *I2,int32_t* dims,bool r
     matcher->matchFeatures(1);//method=1
     matcher->bucketFeatures(param.bucket.max_features,param.bucket.bucket_width,param.bucket.bucket_height);
     p_stereoMatched = matcher->getMatches();
-    cout << endl << BOLDRED"p_stereoMatched.size= " << p_stereoMatched.size() << endl;
+//    cout << endl << BOLDRED"p_stereoMatched.size= " << p_stereoMatched.size() << endl;
 
 
     // bootstrap motion estimate if invalid
@@ -200,8 +200,8 @@ VisualOdometryStereo::result VisualOdometryStereo::updateParameters(vector<Match
     computeResidualsAndJacobian(tr,active);
 
     // init
-    Matrix A(6,6);
-    Matrix B(6,1);
+    Matrix_ A(6,6);
+    Matrix_ B(6,1);
 
     // fill matrices A and B
     for (int32_t m=0; m<6; m++) {

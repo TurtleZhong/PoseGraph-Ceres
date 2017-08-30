@@ -211,7 +211,7 @@ pushBack (uint8_t *I1,uint8_t* I2,int32_t* dims,const bool replace) {
 // input: method ... 0 = flow, 1 = stereo, 2 = quad matching
 //        Tr_delta: uses motion from previous frame to better search for
 //                  matches, if specified
-void Matcher::matchFeatures(int32_t method, Matrix *Tr_delta) {
+void Matcher::matchFeatures(int32_t method, Matrix_ *Tr_delta) {
 
     //////////////////
     // sanity check //
@@ -1207,7 +1207,7 @@ inline void Matcher::findMatch (int32_t* m1,const int32_t &i1,int32_t* m2,const 
 
 void Matcher::matching (int32_t *m1p,int32_t *m2p,int32_t *m1c,int32_t *m2c,
                         int32_t n1p,int32_t n2p,int32_t n1c,int32_t n2c,
-                        vector<Matcher::p_match> &p_matched,int32_t method,bool use_prior,Matrix *Tr_delta) {
+                        vector<Matcher::p_match> &p_matched,int32_t method,bool use_prior,Matrix_ *Tr_delta) {
 
     // descriptor step size (number of int32_t elements in struct)
     // F**k it
@@ -1631,7 +1631,7 @@ bool Matcher::parabolicFitting(const uint8_t* I1_du,const uint8_t* I1_dv,const i
                                const uint8_t* I2_du,const uint8_t* I2_dv,const int32_t* dims2,
                                const float &u1,const float &v1,
                                float       &u2,float       &v2,
-                               Matrix At,Matrix AtA,
+                               Matrix_ At,Matrix_ AtA,
                                uint8_t* desc_buffer) {
 
     // check if parabolic fitting is feasible (descriptors are within margin)
@@ -1673,7 +1673,7 @@ bool Matcher::parabolicFitting(const uint8_t* I1_du,const uint8_t* I1_dv,const i
         return false;
 
     // solve least squares system
-    Matrix c(9,1);
+    Matrix_ c(9,1);
     for (int32_t i=-1; i<=+1; i++) {
         for (int32_t j=-1; j<=+1; j++) {
             int32_t cost_curr = cost[(dv+i)*7+(du+j)];
@@ -1682,7 +1682,7 @@ bool Matcher::parabolicFitting(const uint8_t* I1_du,const uint8_t* I1_dv,const i
             c.val[(i+1)*3+(j+1)][0] = cost_curr;
         }
     }
-    Matrix b = At*c;
+    Matrix_ b = At*c;
     if (!b.solve(AtA))
         return false;
 
@@ -1763,9 +1763,9 @@ void Matcher::refinement (vector<Matcher::p_match> &p_matched,int32_t method) {
                           1, 1,-1,-1, 1, 1,
                           0, 1, 0, 0, 1, 1,
                           1, 1, 1, 1, 1, 1};
-    Matrix A(9,6,A_data);
-    Matrix At  = ~A;
-    Matrix AtA = At*A;
+    Matrix_ A(9,6,A_data);
+    Matrix_ At  = ~A;
+    Matrix_ AtA = At*A;
 
     uint8_t* I1p_du_fit = I1p_du;
     uint8_t* I1p_dv_fit = I1p_dv;

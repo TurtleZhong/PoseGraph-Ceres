@@ -53,6 +53,7 @@ public:
 
     std::vector<Matcher::p_match>     mvStereoMatches;        //this one is use to compute the depth
     std::vector<float>                mvDepth;
+    std::vector<float>                mvuRight;
 
 
 public:
@@ -64,7 +65,7 @@ public:
 
     // MapPoints associated to keypoints, NULL pointer if no association.
     // 每个特征点对应的MapPoint maybe we need stereo matched mappoints's descriptor
-    std::vector<MapPoint*> mvpMapPoints;
+    std::vector<MapPoint::Ptr> mvpMapPoints;
 
     // Flag to identify outlier associations.
     // 观测不到Map中的3D点
@@ -104,8 +105,14 @@ public:
     // compute the mvDepth
     void computeDepth();
 
+    // computeuRight
+    void computeuRight();
+
     // compute the descriptors
     void computeDescriptor();
+
+    // generate init mappoints
+    void generateMappoints();
 
     // Set the camera pose.
     void setPose(cv::Mat Tcw); /*Set Tcw_*/

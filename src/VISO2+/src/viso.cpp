@@ -29,7 +29,7 @@ VisualOdometry::VisualOdometry (parameters param) : param(param) {
   p_observe = 0;
   p_predict = 0;
   matcher   = new Matcher(param.match);
-  Tr_delta  = Matrix::eye(4);
+  Tr_delta  = Matrix_::eye(4);
   Tr_valid  = false;
   srand(0);     /*这个函数主要是为了产生真正的随机数*/
 }
@@ -55,7 +55,7 @@ bool VisualOdometry::updateMotion () {
   return true;
 }
 
-Matrix VisualOdometry::transformationVectorToMatrix (vector<double> tr) {
+Matrix_ VisualOdometry::transformationVectorToMatrix (vector<double> tr) {
 
   // extract parameters
   double rx = tr[0];
@@ -74,7 +74,7 @@ Matrix VisualOdometry::transformationVectorToMatrix (vector<double> tr) {
   double cz = cos(rz);
 
   // compute transformation
-  Matrix Tr(4,4);
+  Matrix_ Tr(4,4);
   Tr.val[0][0] = +cy*cz;          Tr.val[0][1] = -cy*sz;          Tr.val[0][2] = +sy;    Tr.val[0][3] = tx;
   Tr.val[1][0] = +sx*sy*cz+cx*sz; Tr.val[1][1] = -sx*sy*sz+cx*cz; Tr.val[1][2] = -sx*cy; Tr.val[1][3] = ty;
   Tr.val[2][0] = -cx*sy*cz+sx*sz; Tr.val[2][1] = +cx*sy*sz+sx*cz; Tr.val[2][2] = +cx*cy; Tr.val[2][3] = tz;

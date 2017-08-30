@@ -46,7 +46,7 @@ using namespace cv;
 
 Mat drawFeatureMatches(Mat imLeft, Mat imRight, std::vector<Matcher::p_match> featureMatches, int flag);
 Mat drawCircularMatches(Mat currImLeft, Mat currImRight, Mat lastImLeft, Mat lastImRight, std::vector<Matcher::p_match> featureMatches);
-vector<Mat> drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Matcher::p_match> featureMatches, Matrix &T, int id);
+vector<Mat> drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Matcher::p_match> featureMatches, Matrix_ &T, int id);
 cv::Mat pixel2Camera(const float u, const float v, const float depth);
 cv::Point2f camera2Pixel(Mat &x3D);
 
@@ -81,7 +81,7 @@ int main (int argc, char** argv) {
 
     // current pose (this matrix transforms a point from the current
     // frame's camera coordinates to the first frame's camera coordinates)
-    Matrix pose = Matrix::eye(4);
+    Matrix_ pose = Matrix_::eye(4);
 
     Mat previous_imLeft,previous_imRight;
 
@@ -151,10 +151,10 @@ int main (int argc, char** argv) {
             waitKey(0);
 
 
-            Matrix Tcl = viso->getMotion();
+            Matrix_ Tcl = viso->getMotion();
             //cout << endl <<  "Tcl = " << endl <<  Tcl << endl;
             // on success, update current pose
-            pose = pose * Matrix::inv(viso->getMotion());
+            pose = pose * Matrix_::inv(viso->getMotion());
 
             /*plot the right matchs add by zhong*/
             if(i > 2)
@@ -422,7 +422,7 @@ Mat drawCircularMatches(Mat currImLeft, Mat currImRight, Mat lastImLeft, Mat las
 }
 
 
-vector<Mat> drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Matcher::p_match> featureMatches, Matrix &T, int id)
+vector<Mat> drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Matcher::p_match> featureMatches, Matrix_ &T, int id)
 {
     /*task1: draw the previous and current frame's matches*/
     /*task2: draw the reprojection error*/

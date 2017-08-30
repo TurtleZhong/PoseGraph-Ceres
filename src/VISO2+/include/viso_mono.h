@@ -72,12 +72,12 @@ private:
   };  
 
   std::vector<double>  estimateMotion (std::vector<Matcher::p_match> p_matched);  
-  Matrix               smallerThanMedian (Matrix &X,double &median);
-  bool                 normalizeFeaturePoints (std::vector<Matcher::p_match> &p_matched,Matrix &Tp,Matrix &Tc);
-  void                 fundamentalMatrix (const std::vector<Matcher::p_match> &p_matched,const std::vector<int32_t> &active,Matrix &F);
-  void                 EtoRt(Matrix &E,Matrix &K,std::vector<Matcher::p_match> &p_matched,Matrix &X,Matrix &R,Matrix &t);
-  int32_t              triangulateChieral (std::vector<Matcher::p_match> &p_matched,Matrix &K,Matrix &R,Matrix &t,Matrix &X);
-  std::vector<int32_t> getInlier (std::vector<Matcher::p_match> &p_matched,Matrix &F);
+  Matrix_               smallerThanMedian (Matrix_ &X,double &median);
+  bool                 normalizeFeaturePoints (std::vector<Matcher::p_match> &p_matched,Matrix_ &Tp,Matrix_ &Tc);
+  void                 fundamentalMatrix (const std::vector<Matcher::p_match> &p_matched,const std::vector<int32_t> &active,Matrix_ &F);
+  void                 EtoRt(Matrix_ &E,Matrix_ &K,std::vector<Matcher::p_match> &p_matched,Matrix_ &X,Matrix_ &R,Matrix_ &t);
+  int32_t              triangulateChieral (std::vector<Matcher::p_match> &p_matched,Matrix_ &K,Matrix_ &R,Matrix_ &t,Matrix_ &X);
+  std::vector<int32_t> getInlier (std::vector<Matcher::p_match> &p_matched,Matrix_ &F);
   
   // parameters
   parameters param;  

@@ -174,7 +174,7 @@ Sophus::SE3 Converter::toSE3(const cv::Mat &cvT)
     return SE3_Rt;
 }
 
-cv::Mat Converter::toCvMat(const Matrix &pose)
+cv::Mat Converter::toCvMat(const Matrix_ &pose)
 {
     cv::Mat T = cv::Mat::eye(4,4,CV_64FC1);
     for(int i = 0; i < 3; i++)
@@ -185,5 +185,28 @@ cv::Mat Converter::toCvMat(const Matrix &pose)
         }
     }
     return T;
+}
+
+cv::Mat Converter::toCvMat(const Eigen::Vector3d &m, int flag = 1)
+{
+    if(flag)
+    {
+        cv::Mat T = cv::Mat::zeros(3,1,CV_64FC1);
+        for(int i = 0; i < 3; i++)
+        {
+            T.at<double>(i,0) = m(i,0);
+        }
+        return T.clone();
+    }
+    else
+    {
+        cv::Mat T = cv::Mat::zeros(3,1,CV_32FC1);
+        for(int i = 0; i < 3; i++)
+        {
+            T.at<float>(i,0) = m(i,0);
+        }
+        return T.clone();
+    }
+
 }
 

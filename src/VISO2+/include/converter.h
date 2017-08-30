@@ -56,7 +56,8 @@ public:
     static uint8_t* toPng(cv::Mat image);
 
     static Sophus::SE3 toSE3(const cv::Mat &cvT);
-    static cv::Mat toCvMat(const Matrix& pose);
+    static cv::Mat toCvMat(const Matrix_& pose);
+    static cv::Mat toCvMat(const Eigen::Vector3d &m, int flag);
 
 
 

@@ -2,8 +2,9 @@
 #define MAPPOINT_H
 
 #include "common_include.h"
+#include "converter.h"
 
-
+class Converter;
 class Frame;
 class MapPoint
 {
@@ -47,6 +48,11 @@ public:
     inline std::vector<int32_t> getDescriptor()
     {
         return mvDescriptor;
+    }
+
+    inline cv::Mat GetWorldPos()
+    {
+        return Converter::toCvMat(mPos,1);
     }
 
 };

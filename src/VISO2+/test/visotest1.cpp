@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 
 
     VisualOdometryStereo *viso = new VisualOdometryStereo(param);
-    Matrix pose = Matrix::eye(4);
+    Matrix_ pose = Matrix_::eye(4);
     cout << dir << endl << param.calib.f << endl;
     waitKey(0);
 

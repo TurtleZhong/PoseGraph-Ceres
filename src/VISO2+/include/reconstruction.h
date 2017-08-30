@@ -63,7 +63,7 @@ public:
   // min_track_length ... min number of frames a point needs to be tracked for reconstruction
   // max_dist ........... maximum point distance from camera
   // min_angle .......... avoid angles smaller than this for reconstruction (in degrees)
-  void update (std::vector<Matcher::p_match> p_matched,Matrix Tr,int32_t point_type=1,int32_t min_track_length=2,double max_dist=30,double min_angle=2);
+  void update (std::vector<Matcher::p_match> p_matched,Matrix_ Tr,int32_t point_type=1,int32_t min_track_length=2,double max_dist=30,double min_angle=2);
   
   // return currently computed 3d points (finished tracks)
   std::vector<point3d> getPoints() { return points; }
@@ -92,16 +92,16 @@ private:
   int32_t pointType(const track &t,point3d &p);
   result  updatePoint(const track &t,point3d &p,const FLOAT &step_size,const FLOAT &eps);
   void    computeObservations(const std::vector<point2d> &p);
-  bool    computePredictionsAndJacobian(const std::vector<Matrix>::iterator &P_begin,const std::vector<Matrix>::iterator &P_end,point3d &p);
+  bool    computePredictionsAndJacobian(const std::vector<Matrix_>::iterator &P_begin,const std::vector<Matrix_>::iterator &P_end,point3d &p);
   void    testJacobian();
   
   // calibration matrices
-  Matrix K,Tr_cam_road;
+  Matrix_ K,Tr_cam_road;
   
   std::vector<track>   tracks;
-  std::vector<Matrix>  Tr_total;
-  std::vector<Matrix>  Tr_inv_total;
-  std::vector<Matrix>  P_total;
+  std::vector<Matrix_>  Tr_total;
+  std::vector<Matrix_>  Tr_inv_total;
+  std::vector<Matrix_>  P_total;
   std::vector<point3d> points;
   
   FLOAT *J;                     // jacobian

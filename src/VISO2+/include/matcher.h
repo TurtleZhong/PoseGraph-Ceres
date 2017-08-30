@@ -140,7 +140,7 @@ public:
   // input: method ... 0 = flow, 1 = stereo, 2 = quad matching
   //        Tr_delta: uses motion from previous frame to better search for
   //                  matches, if specified
-  void matchFeatures(int32_t method, Matrix *Tr_delta = 0);
+  void matchFeatures(int32_t method, Matrix_ *Tr_delta = 0);
 
   // feature bucketing: keeps only max_features per bucket, where the domain
   // is split into buckets of size (bucket_width,bucket_height)
@@ -241,7 +241,7 @@ private:
                          int32_t& min_ind,int32_t stage,bool flow,bool use_prior,double u_=-1,double v_=-1);
   void matching (int32_t *m1p,int32_t *m2p,int32_t *m1c,int32_t *m2c,
                  int32_t n1p,int32_t n2p,int32_t n1c,int32_t n2c,
-                 std::vector<Matcher::p_match> &p_matched,int32_t method,bool use_prior,Matrix *Tr_delta = 0);
+                 std::vector<Matcher::p_match> &p_matched,int32_t method,bool use_prior,Matrix_ *Tr_delta = 0);
 
   // outlier removal
   void removeOutliers (std::vector<Matcher::p_match> &p_matched,int32_t method);
@@ -251,7 +251,7 @@ private:
                         const uint8_t* I2_du,const uint8_t* I2_dv,const int32_t* dims2,
                         const float &u1,const float &v1,
                         float       &u2,float       &v2,
-                        Matrix At,Matrix AtA,
+                        Matrix_ At,Matrix_ AtA,
                         uint8_t* desc_buffer);
   void relocateMinimum(const uint8_t* I1_du,const uint8_t* I1_dv,const int32_t* dims1,
                        const uint8_t* I2_du,const uint8_t* I2_dv,const int32_t* dims2,

@@ -82,6 +82,7 @@ add_library(${PROJECT_NAME} SHARED
     src/tracking.cpp
     src/map.cpp
     src/mappoint.cpp
+    src/optimizer.cpp
 
 )
 

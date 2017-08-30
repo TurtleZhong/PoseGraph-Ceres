@@ -2,7 +2,10 @@
 
 Frame::Frame() //: mId(-1), mpCamera(nullptr)
 {
-
+    /*init the TCw*/
+    this->mTcw = Mat::eye(4,4,CV_64FC1);
+    this->mTcl = Mat::eye(4,4,CV_64FC1);
+    this->updatePoseMatrices();
 }
 
 Frame::Frame(long id,  Camera::Ptr camera, cv::Mat imLeft, cv::Mat imRight)
@@ -29,17 +32,18 @@ Frame::Frame(long id,  Camera::Ptr camera, cv::Mat imLeft, cv::Mat imRight)
 /*copy constructer*/
 Frame::Frame(const Frame &frame)
     :mId(frame.mId), mpCamera(frame.mpCamera),mvCircularMatches(frame.mvCircularMatches),mImgLeft(frame.mImgLeft),
-     mImgRight(frame.mImgRight),mparams(frame.mparams),mpimg_left_data(frame.mpimg_left_data),
-     mpimg_right_data(frame.mpimg_right_data),mTcl(frame.mTcl),mvfeatureCurrentLeft(frame.mvfeatureCurrentLeft),
-     mvfeatureCurrentRight(frame.mvfeatureCurrentRight),mvfeaturePreviousLeft(frame.mvfeaturePreviousLeft),
-     mvfeaturePreviousRight(frame.mvfeaturePreviousRight),
-     mvDescriptors(frame.mvDescriptors),
-     mvStereoMatches(frame.mvStereoMatches),N_total(frame.N_total),
-     mvDepth(frame.mvDepth),
-     N_circular(frame.N_circular),
-     N_parallel(frame.N_parallel),
-     mvpMapPoints(frame.mvpMapPoints),
-     mvbOutlier(frame.mvbOutlier)
+      mImgRight(frame.mImgRight),mparams(frame.mparams),mpimg_left_data(frame.mpimg_left_data),
+      mpimg_right_data(frame.mpimg_right_data),mTcl(frame.mTcl),mvfeatureCurrentLeft(frame.mvfeatureCurrentLeft),
+      mvfeatureCurrentRight(frame.mvfeatureCurrentRight),mvfeaturePreviousLeft(frame.mvfeaturePreviousLeft),
+      mvfeaturePreviousRight(frame.mvfeaturePreviousRight),
+      mvDescriptors(frame.mvDescriptors),
+      mvStereoMatches(frame.mvStereoMatches),N_total(frame.N_total),
+      mvDepth(frame.mvDepth),
+      mvuRight(frame.mvuRight),
+      N_circular(frame.N_circular),
+      N_parallel(frame.N_parallel),
+      mvpMapPoints(frame.mvpMapPoints),
+      mvbOutlier(frame.mvbOutlier)
 {
     this->dims[0] = frame.dims[0];
     this->dims[1] = frame.dims[1];
@@ -76,7 +80,9 @@ void Frame::computeDepth() //generate mvDepth
         for(vector<Matcher::p_match>::const_iterator it = mvStereoMatches.begin(); it!=mvStereoMatches.end(); it++)
         {
             Matcher::p_match matches = *it;
-            mvDepth[matches.i1c] = mpCamera->bf_ / (matches.u1c - matches.u2c);
+            float depth = mpCamera->bf_ / (matches.u1c - matches.u2c);
+            if(depth > 0 && depth < 80)
+                mvDepth[matches.i1c] = depth;
         }
     }
     else
@@ -84,6 +90,23 @@ void Frame::computeDepth() //generate mvDepth
         cerr << "mvStereoMatches is empty or wrong, you shold check it!" << endl;
     }
 
+}
+
+void Frame::computeuRight()
+{
+    if(mvfeatureCurrentLeft.size() > 0 && mvStereoMatches.size() > 0)
+    {
+        mvuRight = vector<float>(N_total,-1.0f);
+        for(vector<Matcher::p_match>::const_iterator it = mvStereoMatches.begin(); it!=mvStereoMatches.end(); it++)
+        {
+            Matcher::p_match matches = *it;
+            mvuRight[matches.i1c] = matches.u2c;
+        }
+    }
+    else
+    {
+        cerr << "mvStereoMatches is empty or wrong, you shold check it!" << endl;
+    }
 }
 
 void Frame::computeDescriptor()
@@ -109,13 +132,35 @@ void Frame::computeDescriptor()
 }
 
 
+void Frame::generateMappoints()
+{
+    for(int i = 0; i < N_parallel; i++)
+    {
+        const Matcher::p_match &matchd = mvStereoMatches[i];
+        if(mvDepth[matchd.i1c])
+        {
+            Vector3d p_world = mpCamera->pixel2world(
+                        Vector2d(matchd.u1c,matchd.v1c),mT_c_w,mvDepth[matchd.i1c]
+                    );
+            cout << "p_world: " << p_world(0,0) << " " << p_world(1,0) << " " << p_world(2,0) << " " <<  mvDepth[matchd.i1c] <<  endl;
+            Vector3d n = p_world - Converter::toVector3d(GetCameraCenter());
+            n.normalize();
+            MapPoint::Ptr map_point = MapPoint::createMapPoint(
+                        p_world, n, mvDescriptors[matchd.i1c] , this
+                    );
+            mvpMapPoints[matchd.i1c] = map_point;
+        }
+
+    }
+}
+
+
 
 
 void Frame::setPose(cv::Mat Tcw)
 {
     /*here we need to update the SE3 but I have not test it yet*/
     this->mTcw = Tcw.clone();
-    cout << "in set pose" << mTcw << endl;
     mT_c_w = Converter::toSE3(mTcw);
     updatePoseMatrices();
 }
@@ -142,8 +187,8 @@ bool Frame::isInFrame(const Eigen::Vector3d &pt_world)
     }
     Vector2d pixel = mpCamera->world2pixel(pt_world, mT_c_w);
     return pixel(0,0)>0 && pixel(1,0)>0
-        && pixel(0,0)<mImgLeft.cols
-        && pixel(1,0)<mImgLeft.rows;
+            && pixel(0,0)<mImgLeft.cols
+            && pixel(1,0)<mImgLeft.rows;
 }
 
 bool Frame::isInFrame(const cv::Mat &pt_world)
