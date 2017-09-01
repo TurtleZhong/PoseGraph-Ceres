@@ -5,13 +5,14 @@
 #include "map.h"
 #include "viso.h"
 #include "viso_stereo.h"
+#include "optimizer.h"
 #include <opencv2/features2d/features2d.hpp>
-#include <optimizer.h>
+
+#include "Thirdparty/g2o/g2o/types/types_seven_dof_expmap.h"
 
 
-class Frame;
+
 class Map;
-class MapPoint;
 class Tracking
 {
 public:
@@ -72,7 +73,9 @@ public:
 
     void generateFrame(int id, Camera::Ptr camera, cv::Mat imLeft, cv::Mat imRight);
 
+    //int optimizer(Frame &frame);
     void trackLocalMap();
+
 
 
 

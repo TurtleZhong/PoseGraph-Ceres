@@ -4,7 +4,7 @@
 #include "frame.h"
 #include "mappoint.h"
 
-
+class MapPoint;
 class Map
 {
 public:

@@ -14,7 +14,7 @@
 
 
 
-int optimizer::PoseOptimization(Frame &frame)
+int optimizer::PoseOptimization(Frame &frame, Frame& lastframe)
 {
 
 
@@ -120,7 +120,7 @@ int optimizer::PoseOptimization(Frame &frame)
     // At the next optimization, outliers are not included, but at the end they can be classified as inliers again.
     // const float chi2Mono[4]={5.991,5.991,5.991,5.991};
     const float chi2Stereo[4]={7.815,7.815,7.815, 7.815};
-    const int its[4]={15,15,15,15}; // origin:10
+    const int its[4]={150,150,150,150}; // origin:10
 
     int nBad=0;
 
@@ -130,12 +130,13 @@ int optimizer::PoseOptimization(Frame &frame)
 
         vSE3->setEstimate(Converter::toSE3Quat(frame.mTcw));
         cout << "vSE3.estimate = \n" << frame.mTcw << endl;
-        cin.get();
+
         optimizer.initializeOptimization(0);
         optimizer.optimize(its[it]);
         nBad=0;
+        //cin.get();
 
-        cin.get();
+
         for(size_t i=0, iend=vpEdgesStereo.size(); i<iend; i++)
         {
             g2o::EdgeStereoSE3ProjectXYZOnlyPose* e = vpEdgesStereo[i];
@@ -165,9 +166,14 @@ int optimizer::PoseOptimization(Frame &frame)
                 e->setRobustKernel(0);
         }
 
+        cout << "optimizer.edges().size() = " << optimizer.edges().size() << endl;
+
+
         if(optimizer.edges().size()<10)
             break;
     }
+
+
 
     // Recover optimized pose and return number of inliers
     g2o::VertexSE3Expmap* vSE3_recov = static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(0));

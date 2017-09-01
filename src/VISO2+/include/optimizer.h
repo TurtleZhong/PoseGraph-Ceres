@@ -7,11 +7,10 @@
 #include "Thirdparty/g2o/g2o/types/types_seven_dof_expmap.h"
 
 
-class Frame;
 class optimizer
 {
 public:
-    int static PoseOptimization(Frame &frame);
+    static int PoseOptimization(Frame &frame, Frame &lastframe);
 };
 
 

@@ -6,6 +6,7 @@
 
 class Converter;
 class Frame;
+class Map;
 class MapPoint
 {
 public:

@@ -105,6 +105,9 @@ public:
     // compute the mvDepth
     void computeDepth();
 
+    // for debug --> show the depth
+    cv::Mat showDepth();
+
     // computeuRight
     void computeuRight();
 

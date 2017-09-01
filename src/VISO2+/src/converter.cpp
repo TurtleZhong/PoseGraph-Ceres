@@ -34,11 +34,11 @@ std::vector<cv::Mat> Converter::toDescriptorVector(const cv::Mat &Descriptors)
 g2o::SE3Quat Converter::toSE3Quat(const cv::Mat &cvT)
 {
     Eigen::Matrix<double,3,3> R;
-    R << cvT.at<float>(0,0), cvT.at<float>(0,1), cvT.at<float>(0,2),
-         cvT.at<float>(1,0), cvT.at<float>(1,1), cvT.at<float>(1,2),
-         cvT.at<float>(2,0), cvT.at<float>(2,1), cvT.at<float>(2,2);
+    R << cvT.at<double>(0,0), cvT.at<double>(0,1), cvT.at<double>(0,2),
+         cvT.at<double>(1,0), cvT.at<double>(1,1), cvT.at<double>(1,2),
+         cvT.at<double>(2,0), cvT.at<double>(2,1), cvT.at<double>(2,2);
 
-    Eigen::Matrix<double,3,1> t(cvT.at<float>(0,3), cvT.at<float>(1,3), cvT.at<float>(2,3));
+    Eigen::Matrix<double,3,1> t(cvT.at<double>(0,3), cvT.at<double>(1,3), cvT.at<double>(2,3));
 
     return g2o::SE3Quat(R,t);
 }
@@ -59,29 +59,29 @@ cv::Mat Converter::toCvMat(const g2o::Sim3 &Sim3)
 
 cv::Mat Converter::toCvMat(const Eigen::Matrix<double,4,4> &m)
 {
-    cv::Mat cvMat(4,4,CV_32F);
+    cv::Mat cvMat(4,4,CV_64F);
     for(int i=0;i<4;i++)
         for(int j=0; j<4; j++)
-            cvMat.at<float>(i,j)=m(i,j);
+            cvMat.at<double>(i,j)=m(i,j);
 
     return cvMat.clone();
 }
 
 cv::Mat Converter::toCvMat(const Eigen::Matrix3d &m)
 {
-    cv::Mat cvMat(3,3,CV_32F);
+    cv::Mat cvMat(3,3,CV_64F);
     for(int i=0;i<3;i++)
         for(int j=0; j<3; j++)
-            cvMat.at<float>(i,j)=m(i,j);
+            cvMat.at<double>(i,j)=m(i,j);
 
     return cvMat.clone();
 }
 
 cv::Mat Converter::toCvMat(const Eigen::Matrix<double,3,1> &m)
 {
-    cv::Mat cvMat(3,1,CV_32F);
+    cv::Mat cvMat(3,1,CV_64F);
     for(int i=0;i<3;i++)
-            cvMat.at<float>(i)=m(i);
+            cvMat.at<double>(i)=m(i);
 
     return cvMat.clone();
 }
@@ -124,9 +124,9 @@ Eigen::Matrix<double,3,3> Converter::toMatrix3d(const cv::Mat &cvMat3)
 {
     Eigen::Matrix<double,3,3> M;
 
-    M << cvMat3.at<float>(0,0), cvMat3.at<float>(0,1), cvMat3.at<float>(0,2),
-         cvMat3.at<float>(1,0), cvMat3.at<float>(1,1), cvMat3.at<float>(1,2),
-         cvMat3.at<float>(2,0), cvMat3.at<float>(2,1), cvMat3.at<float>(2,2);
+    M << cvMat3.at<double>(0,0), cvMat3.at<double>(0,1), cvMat3.at<double>(0,2),
+         cvMat3.at<double>(1,0), cvMat3.at<double>(1,1), cvMat3.at<double>(1,2),
+         cvMat3.at<double>(2,0), cvMat3.at<double>(2,1), cvMat3.at<double>(2,2);
 
     return M;
 }
@@ -164,11 +164,11 @@ uint8_t* Converter::toPng(cv::Mat image)
 Sophus::SE3 Converter::toSE3(const cv::Mat &cvT)
 {
     Eigen::Matrix<double,3,3> R;
-    R << cvT.at<float>(0,0), cvT.at<float>(0,1), cvT.at<float>(0,2),
-         cvT.at<float>(1,0), cvT.at<float>(1,1), cvT.at<float>(1,2),
-         cvT.at<float>(2,0), cvT.at<float>(2,1), cvT.at<float>(2,2);
+    R << cvT.at<double>(0,0), cvT.at<double>(0,1), cvT.at<double>(0,2),
+         cvT.at<double>(1,0), cvT.at<double>(1,1), cvT.at<double>(1,2),
+         cvT.at<double>(2,0), cvT.at<double>(2,1), cvT.at<double>(2,2);
 
-    Eigen::Matrix<double,3,1> t(cvT.at<float>(0,3), cvT.at<float>(1,3), cvT.at<float>(2,3));
+    Eigen::Matrix<double,3,1> t(cvT.at<double>(0,3), cvT.at<double>(1,3), cvT.at<double>(2,3));
     Sophus::SE3 SE3_Rt(R,t);
 
     return SE3_Rt;

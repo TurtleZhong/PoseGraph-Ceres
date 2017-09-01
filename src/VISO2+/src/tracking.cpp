@@ -8,6 +8,20 @@
 
 #include "config.h"
 #include "tracking.h"
+
+#include "Thirdparty/g2o/g2o/core/block_solver.h"
+#include "Thirdparty/g2o/g2o/core/optimization_algorithm_levenberg.h"
+#include "Thirdparty/g2o/g2o/solvers/linear_solver_eigen.h"
+#include "Thirdparty/g2o/g2o/types/types_six_dof_expmap.h"
+#include "Thirdparty/g2o/g2o/core/robust_kernel_impl.h"
+#include "Thirdparty/g2o/g2o/solvers/linear_solver_dense.h"
+#include "Thirdparty/g2o/g2o/types/types_seven_dof_expmap.h"
+
+#include<Eigen/StdVector>
+
+#include "converter.h"
+#include "optimizer.h"
+
 //#include "g2o_types.h"
 
 
@@ -66,7 +80,7 @@ bool Tracking::addFrame ( int id, Camera::Ptr camera, Mat imLeft, Mat imRight )
         // very important!!!
         if(curr_.mId > 6)
             trackLocalMap();
-
+        cout << "trackLocal map is done!!!" << endl;
 
         if ( checkEstimatedPose() == true ) // a good estimation
         {
@@ -230,14 +244,21 @@ void Tracking::generateFrame(int id, Camera::Ptr camera, Mat imLeft, Mat imRight
 
     curr_.mvbOutlier = vector<bool>(curr_.N_total,false);
 
+    Mat depthImg = curr_.showDepth();
+    cv::imshow("depthImg",depthImg);
+    cv::waitKey(0);
+
 }
+
+
 
 void Tracking::trackLocalMap()
 {
     /*actually we need to update the local map points and use g2o to update the pose*/
 
-    optimizer::PoseOptimization(curr_);
+
+    optimizer::PoseOptimization(this->curr_,this->last_);
+    cout << "run here ... " << endl;
 
 
 }
-

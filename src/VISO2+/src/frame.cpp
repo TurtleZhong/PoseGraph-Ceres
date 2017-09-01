@@ -80,6 +80,7 @@ void Frame::computeDepth() //generate mvDepth
         for(vector<Matcher::p_match>::const_iterator it = mvStereoMatches.begin(); it!=mvStereoMatches.end(); it++)
         {
             Matcher::p_match matches = *it;
+            cout << "matches.u1c = " << matches.u1c << " matches.u2c = " << matches.u2c << endl;
             float depth = mpCamera->bf_ / (matches.u1c - matches.u2c);
             if(depth > 0 && depth < 80)
                 mvDepth[matches.i1c] = depth;
@@ -90,6 +91,29 @@ void Frame::computeDepth() //generate mvDepth
         cerr << "mvStereoMatches is empty or wrong, you shold check it!" << endl;
     }
 
+}
+
+
+cv::Mat Frame::showDepth()
+{
+    Mat depth = mImgLeft.clone();
+    cv::cvtColor(depth,depth,CV_GRAY2BGR);
+    for(int i = 0; i < N_total; i++)
+    {
+        if(mvDepth[i] > 0)
+        {
+            /*show the depth*/
+            stringstream s;
+            s << mvDepth[i];
+            cv::Point2f kp;
+            kp.x = mvfeatureCurrentLeft[i].u;
+            kp.y = mvfeatureCurrentLeft[i].v;
+            cv::circle(depth,kp,1,cv::Scalar(255,0,0),-1);
+            cv::putText(depth, s.str(), kp, cv::FONT_HERSHEY_PLAIN,0.5,cv::Scalar(255,255,255),1,8 );
+        }
+
+    }
+    return depth;
 }
 
 void Frame::computeuRight()
@@ -137,7 +161,7 @@ void Frame::generateMappoints()
     for(int i = 0; i < N_parallel; i++)
     {
         const Matcher::p_match &matchd = mvStereoMatches[i];
-        if(mvDepth[matchd.i1c])
+        if(mvDepth[matchd.i1c] > 0)
         {
             Vector3d p_world = mpCamera->pixel2world(
                         Vector2d(matchd.u1c,matchd.v1c),mT_c_w,mvDepth[matchd.i1c]
