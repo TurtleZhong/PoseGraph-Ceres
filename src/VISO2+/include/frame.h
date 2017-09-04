@@ -17,9 +17,9 @@ class Frame
     /*actually this should be provite*/
 public:
 
-    typedef std::shared_ptr<Frame>   Ptr;
+    //typedef std::shared_ptr<Frame>   Ptr;
     unsigned long                    mId;                            // id of the current frame
-    Camera::Ptr                      mpCamera;                        // Pinhole RGBD camera model (for deteil please see camera.h)
+    Camera*                          mpCamera;                        // Pinhole RGBD camera model (for deteil please see camera.h)
 
     std::vector<Matcher::p_match>    mvCircularMatches;
 
@@ -65,7 +65,7 @@ public:
 
     // MapPoints associated to keypoints, NULL pointer if no association.
     // 每个特征点对应的MapPoint maybe we need stereo matched mappoints's descriptor
-    std::vector<MapPoint::Ptr> mvpMapPoints;
+    std::vector<MapPoint*> mvpMapPoints;
 
     // Flag to identify outlier associations.
     // 观测不到Map中的3D点
@@ -86,7 +86,7 @@ public:
 
 
     Frame(long id,
-            Camera::Ptr camera,
+            Camera* camera,
             Mat imLeft,
             Mat imRight
             );
@@ -134,6 +134,8 @@ public:
     {
         return mRwc.clone();
     }
+
+    bool isInFrustum(MapPoint *pMP);  /*usually use this one*/
 
     //judge a 3d point is in the frame
     bool isInFrame(const Eigen::Vector3d &pt_world);

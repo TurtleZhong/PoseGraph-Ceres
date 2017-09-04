@@ -16,9 +16,9 @@ int main(int argc, char *argv[])
     outFile.open("../camera_pose.txt");
 
 
-    string dir = "/home/m/KITTI/dataset/sequences/00";
+    string dir = "/home/m/KITTI/dataset/sequences/01";
     Config::setParameterFile("/home/m/ws_orb2/src/VISO2+/config/KITTI00-02.yaml");
-    Camera::Ptr camera (new Camera);
+    Camera* camera (new Camera);
 
 
     Tracking* Tracker = new Tracking();

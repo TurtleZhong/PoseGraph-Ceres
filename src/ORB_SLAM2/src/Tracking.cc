@@ -944,6 +944,30 @@ bool Tracking::TrackLocalMap()
 
     SearchLocalPoints();
 
+    ofstream outFile;
+    outFile.open("../world_pose.txt");
+
+
+    outFile << "*** Frame: " << mCurrentFrame.mnId << " ***" << endl;
+
+    for(int i = 0; i < mCurrentFrame.N; i++)
+    {
+        MapPoint* pMP = mCurrentFrame.mvpMapPoints[i];
+        if(pMP)
+        {
+            Mat pose = pMP->GetWorldPos();
+            float x = pose.at<float>(0,0);
+            float y = pose.at<float>(1,0);
+            float z = pose.at<float>(2,0);
+            for(int j = 0; j < 3; j++)
+            {
+                outFile << "world_pose:" << i << " " << x << " " << y << " " << z;
+            }
+            outFile << endl;
+        }
+
+    }
+
     // Optimize Pose
     Optimizer::PoseOptimization(&mCurrentFrame);
     mnMatchesInliers = 0;

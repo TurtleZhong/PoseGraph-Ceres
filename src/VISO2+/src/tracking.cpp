@@ -21,6 +21,7 @@
 
 #include "converter.h"
 #include "optimizer.h"
+#include "new_matcher.h"
 
 //#include "g2o_types.h"
 
@@ -31,6 +32,7 @@ Tracking::Tracking() :
     curr_ (),
     last_(),
     map_ ( new Map ),
+    keyframeCount(0),
     num_lost_(0)
 {
     mThDepth                 = Config::get<float>("Camera.bf") * (float)Config::get<int>("ThDepth") / Config::get<float>("Camera.fx");
@@ -57,7 +59,7 @@ Tracking::~Tracking()
 
 }
 
-bool Tracking::addFrame ( int id, Camera::Ptr camera, Mat imLeft, Mat imRight )
+bool Tracking::addFrame (int id, Camera *camera, Mat imLeft, Mat imRight )
 {
     switch ( state_ )
     {
@@ -78,7 +80,7 @@ bool Tracking::addFrame ( int id, Camera::Ptr camera, Mat imLeft, Mat imRight )
 
         //here we need to use g2o to optimize the camera pose
         // very important!!!
-        if(curr_.mId > 6)
+        if(curr_.mId > 5)
             trackLocalMap();
         cout << "trackLocal map is done!!!" << endl;
 
@@ -90,6 +92,12 @@ bool Tracking::addFrame ( int id, Camera::Ptr camera, Mat imLeft, Mat imRight )
             {
                 addKeyFrame();
                 addLocalMapPoints();
+                keyframeCount++;
+                if(keyframeCount > 3 )
+                {
+                    keyframeCount = 0;
+                    mvpLocalMapPoints.clear();
+                }
                 cout << BOLDYELLOW"Frame :" << curr_.mId << " is a key Frame!!" << endl;
             }
 
@@ -125,7 +133,7 @@ bool Tracking::checkEstimatedPose()
 
 bool Tracking::checkKeyFrame()
 {
-    if(curr_.mId > ref_.mId + 2)
+    if(curr_.mId > ref_.mId)
     {
         return true;
     }
@@ -147,10 +155,8 @@ void Tracking::addKeyFrame()
                     );
             Vector3d n = p_world - Converter::toVector3d(curr_.GetCameraCenter());
             n.normalize();
-            MapPoint::Ptr map_point = MapPoint::createMapPoint(
-                        p_world, n, curr_.mvDescriptors[matchd.i1c] , &curr_
-                    );
-            map_->insertMapPoint( map_point );
+            MapPoint* pMP = new MapPoint(p_world, n, curr_.mId, curr_.mvDescriptors[matchd.i1c]);
+            map_->insertMapPoint( pMP );
         }
 
         map_->insertKeyFrame ( curr_ );
@@ -174,10 +180,8 @@ void Tracking::addLocalMapPoints()
                 );
         Vector3d n = p_world - Converter::toVector3d(curr_.GetCameraCenter());
         n.normalize();
-        MapPoint::Ptr map_point = MapPoint::createMapPoint(
-                    p_world, n, curr_.mvDescriptors[matchd.i1c] , &curr_
-                );
-        mvpLocalMapPoints.push_back(map_point);
+        MapPoint* pMP = new MapPoint(p_world, n, curr_.mId, curr_.mvDescriptors[matchd.i1c]);
+        mvpLocalMapPoints.push_back(pMP);
     }
 }
 
@@ -186,7 +190,7 @@ void Tracking::optimizeMap()
 
 }
 
-double Tracking::getViewAngle ( Frame::Ptr frame, MapPoint::Ptr point )
+double Tracking::getViewAngle ( Frame* frame, MapPoint* point )
 {
     //    Vector3d n = point->pos_ - frame->getCamCenter();
     //    n.normalize();
@@ -196,7 +200,7 @@ double Tracking::getViewAngle ( Frame::Ptr frame, MapPoint::Ptr point )
 }
 
 
-void Tracking::generateFrame(int id, Camera::Ptr camera, Mat imLeft, Mat imRight)
+void Tracking::generateFrame(int id, Camera* camera, Mat imLeft, Mat imRight)
 {
 
     this->curr_ = Frame(id, camera, imLeft, imRight);
@@ -239,14 +243,58 @@ void Tracking::generateFrame(int id, Camera::Ptr camera, Mat imLeft, Mat imRight
     curr_.setPose(Tcw);
 
     /*Generate Mappoints */
-    curr_.mvpMapPoints= vector<MapPoint::Ptr>(curr_.N_total,static_cast<MapPoint::Ptr>(NULL));
+    curr_.mvpMapPoints= vector<MapPoint*>(curr_.N_total,static_cast<MapPoint*>(NULL));
     curr_.generateMappoints();
 
     curr_.mvbOutlier = vector<bool>(curr_.N_total,false);
 
     Mat depthImg = curr_.showDepth();
     cv::imshow("depthImg",depthImg);
-    cv::waitKey(0);
+    cv::waitKey(27);
+
+}
+
+
+void Tracking::searchLocalPoints()
+{
+    // Do not search map points already matched
+//    for(vector<MapPoint*>::iterator vit=curr_.mvpMapPoints.begin(), vend=curr_.mvpMapPoints.end(); vit!=vend; vit++)
+//    {
+//        MapPoint* pMP = *vit;
+//        if(pMP)
+//        {
+
+//            pMP->IncreaseVisible();
+//            pMP->mnLastFrameSeen = mCurrentFrame.mnId;
+//            //pMP->mbTrackInView = false;
+
+//        }
+//    }
+
+    int nToMatch=0;
+
+    // Project points in frame and check its visibility
+    for(vector<MapPoint*>::iterator vit=mvpLocalMapPoints.begin(), vend=mvpLocalMapPoints.end(); vit!=vend; vit++)
+    {
+        MapPoint* pMP = *vit;
+        if(pMP->mnLastFrameSeen == curr_.mId)
+            continue;
+
+        // Project (this fills MapPoint variables for matching)
+        if(curr_.isInFrustum(pMP))
+        {
+            //pMP->IncreaseVisible();
+            nToMatch++;
+        }
+    }
+
+    if(nToMatch>0)
+    {
+        cout << BOLDRED"nToMatch = " << nToMatch << endl;
+    }
+
+    New_Matcher matcher;
+    matcher.SearchByProjection(curr_, mvpLocalMapPoints);
 
 }
 
@@ -256,8 +304,10 @@ void Tracking::trackLocalMap()
 {
     /*actually we need to update the local map points and use g2o to update the pose*/
 
+    /*first we need to update curr_.mvpMappoints through mvlocalMappoints*/
+    searchLocalPoints();
 
-    optimizer::PoseOptimization(this->curr_,this->last_);
+    optimizer::PoseOptimization(&curr_, &last_);
     cout << "run here ... " << endl;
 
 

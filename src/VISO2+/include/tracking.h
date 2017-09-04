@@ -16,7 +16,7 @@ class Map;
 class Tracking
 {
 public:
-    typedef shared_ptr<VisualOdometry> Ptr;        /*shared ptr*/
+    //typedef shared_ptr<VisualOdometry> Ptr;        /*shared ptr*/
     enum VOstate {
         INITIALIZING = -1,
         OK = 0,
@@ -28,9 +28,11 @@ public:
     Frame                   ref_;                  /*reference frame*/
     Frame                   curr_;                 /*current frame*/
     Frame                   last_;                 /*last frame*/
-    Map::Ptr                map_;                  /*map with all frames and mappoints*/
+    Map*                    map_;                  /*map with all frames and mappoints*/
 
-    std::vector<MapPoint::Ptr> mvpLocalMapPoints;
+    std::vector<MapPoint*> mvpLocalMapPoints;
+
+    int                     keyframeCount;
 
 
     int                     num_lost_;
@@ -58,7 +60,7 @@ public:
     Tracking();
     ~Tracking();
 
-    bool addFrame(int id, Camera::Ptr camera, cv::Mat imLeft, cv::Mat imRight);
+    bool addFrame(int id, Camera* camera, cv::Mat imLeft, cv::Mat imRight);
 
     /*functions are below*/
 public:
@@ -69,11 +71,11 @@ public:
 
     void addLocalMapPoints();
     void optimizeMap();
-    double getViewAngle( Frame::Ptr frame, MapPoint::Ptr point );
+    double getViewAngle( Frame* frame, MapPoint* point );
 
-    void generateFrame(int id, Camera::Ptr camera, cv::Mat imLeft, cv::Mat imRight);
+    void generateFrame(int id, Camera* camera, cv::Mat imLeft, cv::Mat imRight);
 
-    //int optimizer(Frame &frame);
+    void searchLocalPoints();
     void trackLocalMap();
 
 

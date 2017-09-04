@@ -137,7 +137,7 @@ public:
     // get random and unique sample of num numbers from 1:N
     std::vector<int32_t> getRandomSample (int32_t N,int32_t num);
 
-    Matrix_                         Tr_delta;   // transformation (previous -> current frame)
+    Matrix_                        Tr_delta;   // transformation (previous -> current frame)
     bool                           Tr_valid;   // motion estimate exists or not
     Matcher                       *matcher;    // feature matcher
     std::vector<int32_t>           inliers;    // inlier set

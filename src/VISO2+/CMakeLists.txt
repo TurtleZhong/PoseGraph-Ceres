@@ -78,11 +78,13 @@ add_library(${PROJECT_NAME} SHARED
     src/config.cpp
     src/camera.cpp
     src/converter.cpp
-    src/frame.cpp
     src/tracking.cpp
+    src/optimizer.cpp
+    src/frame.cpp
     src/map.cpp
     src/mappoint.cpp
-    src/optimizer.cpp
+    src/new_matcher.cpp
+    
 
 )
 

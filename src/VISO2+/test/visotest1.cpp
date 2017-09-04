@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 
 
     Config::setParameterFile("/home/m/ws_orb2/src/VISO2+/config/KITTI00-02.yaml");
-    Camera::Ptr camera (new Camera);
+    Camera* camera (new Camera);
 
     VisualOdometryStereo::parameters param;
     param.calib.f = camera->fx_;

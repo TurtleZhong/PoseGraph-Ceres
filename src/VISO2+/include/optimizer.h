@@ -10,7 +10,7 @@
 class optimizer
 {
 public:
-    static int PoseOptimization(Frame &frame, Frame &lastframe);
+    static int PoseOptimization(Frame *frame, Frame *lastframe);
 };
 
 

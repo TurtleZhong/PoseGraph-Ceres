@@ -960,6 +960,7 @@ inline void Matcher::findMatch (int32_t* m1,const int32_t &i1,int32_t* m2,const 
             min_cost = cost;
           }
         }
+
       }
     }
   }

@@ -8,7 +8,7 @@ Frame::Frame() //: mId(-1), mpCamera(nullptr)
     this->updatePoseMatrices();
 }
 
-Frame::Frame(long id,  Camera::Ptr camera, cv::Mat imLeft, cv::Mat imRight)
+Frame::Frame(long id,  Camera *camera, cv::Mat imLeft, cv::Mat imRight)
     : mId(id), mpCamera(camera), mImgLeft(imLeft), mImgRight(imRight)
 {
     /*here we need to update the png data for viso to use*/
@@ -80,9 +80,9 @@ void Frame::computeDepth() //generate mvDepth
         for(vector<Matcher::p_match>::const_iterator it = mvStereoMatches.begin(); it!=mvStereoMatches.end(); it++)
         {
             Matcher::p_match matches = *it;
-            cout << "matches.u1c = " << matches.u1c << " matches.u2c = " << matches.u2c << endl;
+            //cout << "matches.u1c = " << matches.u1c << " matches.u2c = " << matches.u2c << endl;
             float depth = mpCamera->bf_ / (matches.u1c - matches.u2c);
-            if(depth > 0 && depth < 80)
+            if(depth > 0 && depth < 100)
                 mvDepth[matches.i1c] = depth;
         }
     }
@@ -166,13 +166,12 @@ void Frame::generateMappoints()
             Vector3d p_world = mpCamera->pixel2world(
                         Vector2d(matchd.u1c,matchd.v1c),mT_c_w,mvDepth[matchd.i1c]
                     );
-            cout << "p_world: " << p_world(0,0) << " " << p_world(1,0) << " " << p_world(2,0) << " " <<  mvDepth[matchd.i1c] <<  endl;
+            //cout << "p_world: " << p_world(0,0) << " " << p_world(1,0) << " " << p_world(2,0) << " " <<  mvDepth[matchd.i1c] <<  endl;
             Vector3d n = p_world - Converter::toVector3d(GetCameraCenter());
             n.normalize();
-            MapPoint::Ptr map_point = MapPoint::createMapPoint(
-                        p_world, n, mvDescriptors[matchd.i1c] , this
-                    );
-            mvpMapPoints[matchd.i1c] = map_point;
+
+            MapPoint* pMP = new MapPoint(p_world, n, mId, mvDescriptors[matchd.i1c]);
+            mvpMapPoints[matchd.i1c] = pMP;
         }
 
     }
@@ -199,6 +198,55 @@ void Frame::updatePoseMatrices()
     // mtcw, 即相机坐标系下相机坐标系到世界坐标系间的向量, 向量方向由相机坐标系指向世界坐标系
     // mOw, 即世界坐标系下世界坐标系到相机坐标系间的向量, 向量方向由世界坐标系指向相机坐标系
     mOw = -mRcw.t()*mtcw;
+}
+
+bool Frame::isInFrustum(MapPoint *pMP)
+{
+    pMP->mbTrackInView = false;
+
+    // 3D in absolute coordinates
+    cv::Mat P = pMP->GetWorldPos();
+
+    // 3D in camera coordinates
+    const cv::Mat Pc = mRcw*P+mtcw;
+    const float &PcX = (float)Pc.at<double>(0);
+    const float &PcY = (float)Pc.at<double>(1);
+    const float &PcZ = (float)Pc.at<double>(2);
+
+    // Check positive depth
+    if(PcZ<0.0f)
+        return false;
+
+    // Project in image and check it is not outside
+    const float invz = 1.0f/PcZ;
+    const float u=mpCamera->fx_*PcX*invz+mpCamera->cx_;
+    const float v=mpCamera->fy_*PcY*invz+mpCamera->cy_;
+
+    if(u<0 || u>mImgLeft.cols)
+        return false;
+    if(v<0 || v>mImgLeft.rows)
+        return false;
+
+    // Check distance is in the scale invariance region of the MapPoint
+
+   // Check viewing angle
+//    cv::Mat Pn = pMP->GetNormal();
+
+//    const float viewCos = PO.dot(Pn)/dist;
+
+//    if(viewCos<viewingCosLimit)
+//        return false;
+
+    // Predict scale in the image
+//    const int nPredictedLevel = pMP->PredictScale(dist,this);
+
+    // Data used by the tracking
+    pMP->mbTrackInView = true;
+    pMP->mTrackProjX = u;
+    pMP->mTrackProjXR = u - mpCamera->bf_*invz;
+    pMP->mTrackProjY = v;
+
+    return true;
 }
 
 

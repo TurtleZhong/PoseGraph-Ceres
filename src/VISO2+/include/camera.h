@@ -7,7 +7,7 @@
 class Camera
 {
 public:
-    typedef std::shared_ptr<Camera>  Ptr;
+    //typedef std::shared_ptr<Camera>  Ptr;
     float                            fx_;
     float                            fy_;
     float                            cx_;

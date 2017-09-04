@@ -461,6 +461,7 @@ vector<Mat> FrameDrawer::DrawReprojectionError()
         /*show the depth*/
         stringstream s;
         s << depth;
+        cout << "*****" << "vLastKeys[last_id].pt.x = " << vLastKeys[last_id].pt.x << " vLastKeys[last_id].pt.y = " << vLastKeys[last_id].pt.y << endl;
         cv::putText(last_Im, s.str(), vLastKeys[last_id].pt, cv::FONT_HERSHEY_PLAIN,0.5,cv::Scalar(255,255,255),1,8 );
 
 

@@ -14,7 +14,7 @@ void Map::insertKeyFrame(Frame frame)
     }
 }
 
-void Map::insertMapPoint(MapPoint::Ptr map_point)
+void Map::insertMapPoint(MapPoint* map_point)
 {
     if( map_points_.find(map_point->mId) == map_points_.end())
     {

@@ -46,7 +46,7 @@ using namespace cv;
 
 Mat drawFeatureMatches(Mat imLeft, Mat imRight, std::vector<Matcher::p_match> featureMatches, int flag);
 Mat drawCircularMatches(Mat currImLeft, Mat currImRight, Mat lastImLeft, Mat lastImRight, std::vector<Matcher::p_match> featureMatches);
-vector<Mat> drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Matcher::p_match> featureMatches, Matrix &T, int id);
+vector<Mat> drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Matcher::p_match> featureMatches, Matrix &T, vector<int32_t> vinliers, int id);
 cv::Mat pixel2Camera(const float u, const float v, const float depth);
 cv::Point2f camera2Pixel(Mat &x3D);
 uint8_t* toPng(const cv::Mat &image);
@@ -147,9 +147,9 @@ int main (int argc, char** argv) {
         if(imRight.isContinuous())
             right_image = imRight.data;
 
-        cout << endl << "***" << left_image[0] << endl;
+        //cout << endl << "***" << left_image[0] << endl;
 
-        waitKey(0);
+        //waitKey(0);
 
 
 
@@ -172,6 +172,7 @@ int main (int argc, char** argv) {
             /*plot the right matchs add by zhong*/
             if(i > 5)
             {
+                vector<int32_t> vinliers = viso.getInlierIndices();
                 std::vector<Matcher::p_match> featureMatchs = viso.getMatches();
                 //                    Mat currentFrame = drawFeatureMatches(imLeft,imRight,featureMatchs,0);
                 //                    Mat previousFrame = drawFeatureMatches(previous_imLeft,previous_imLeft,featureMatchs,1);
@@ -179,9 +180,9 @@ int main (int argc, char** argv) {
                 //                    imshow("previousFrame",previousFrame);
 
                 //Mat output = drawCircularMatches(imLeft,imRight,previous_imLeft,previous_imRight,featureMatchs);
-                vector<Mat> output = drawReprojectionError(imLeft,previous_imLeft,featureMatchs,Tcl,i);
+                vector<Mat> output = drawReprojectionError(imLeft,previous_imLeft,featureMatchs,Tcl,vinliers,i);
                 //imshow("Reprojection Error!",output[0]);
-                resize(output[1],output[1],Size(),0.9,0.5);
+                //resize(output[1],output[1],Size(),0.9,0.5);
                 imshow("Matches",output[1]);
 
             }
@@ -433,7 +434,7 @@ Mat drawCircularMatches(Mat currImLeft, Mat currImRight, Mat lastImLeft, Mat las
 }
 
 
-vector<Mat> drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Matcher::p_match> featureMatches, Matrix &T, int id)
+vector<Mat> drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Matcher::p_match> featureMatches, Matrix &T, vector<int32_t> vinliers, int id)
 {
     /*task1: draw the previous and current frame's matches*/
     /*task2: draw the reprojection error*/
@@ -558,12 +559,24 @@ vector<Mat> drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Ma
     lastImLeft.copyTo(outputReprojection(cv::Rect(0,lastImLeft.rows,lastImLeft.cols,lastImLeft.rows)));
 
 
+    int index = 0;
     for(vector < vector<Point2f> >::iterator iter = position.begin(); iter!=position.end();iter++)
     {
+
         vector<Point2f> pos = *iter;
         Point2f pt1 = pos[0];
         Point2f pt2 = pos[1];
-        cv::line(outputMatches,pt1,Point2f(pt2.x, pt2.y + currMatch.rows),Scalar(0,0,255),1,8);
+        vector<int32_t>::iterator result = find(vinliers.begin(),vinliers.end(),index);
+        if(result == vinliers.end())
+        {
+            cv::line(outputMatches,pt1,Point2f(pt2.x, pt2.y + currMatch.rows),Scalar(0,0,255),1,8);
+        }
+        else
+        {
+            cv::line(outputMatches,pt1,Point2f(pt2.x, pt2.y + currMatch.rows),Scalar(0,255,255),1,8);
+        }
+
+        index++;
     }
 
 
@@ -572,7 +585,7 @@ vector<Mat> drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Ma
     string tmp;
     ss1 >> tmp;
     string matchsName = "/home/m/ws_orb2/src/VISO2/Matches/" + tmp + ".png";
-    //imwrite(matchsName, outputMatches);
+    imwrite(matchsName, outputMatches);
 
     string filename = "/home/m/ws_orb2/src/VISO2/Reprojection/" + tmp + ".png";
     //imwrite(filename,outputReprojection);

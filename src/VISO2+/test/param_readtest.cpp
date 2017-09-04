@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
 {
 
     Config::setParameterFile("/home/m/ws_orb2/src/VISO2+/config/KITTI00-02.yaml");
-    Camera::Ptr camera (new Camera);
+    Camera* camera (new Camera);
     cout << "camera.bf_ = " << camera->bf_ << endl;
 
     /*****************************SE3 test******************************************/
