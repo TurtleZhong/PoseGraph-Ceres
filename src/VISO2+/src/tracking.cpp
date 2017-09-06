@@ -98,10 +98,11 @@ bool Tracking::addFrame (int id, Camera *camera, Mat imLeft, Mat imRight )
 
             cout << BOLDMAGENTA"slerp_ Tcl = \n" << Tcw << endl;
             cout << "estimate Tcl = \n" << curr_.mTcw << endl;
+            cout << "trackLocal map is done!!!" << endl;
         }
 
 
-        cout << "trackLocal map is done!!!" << endl;
+
 
         if ( checkEstimatedPose() == true ) // a good estimation
         {
@@ -115,12 +116,13 @@ bool Tracking::addFrame (int id, Camera *camera, Mat imLeft, Mat imRight )
             if ( checkKeyFrame() == true ) // is a key-frame
             {
                 addKeyFrame();
+                //mvpLocalMapPoints.clear();
                 addLocalMapPoints();
-                //keyframeCount++;
+                keyframeCount++;
                 if(keyframeCount == 2 )
                 {
-                    //keyframeCount = 0;
-                    //mvpLocalMapPoints.clear();
+                    keyframeCount = 0;
+                    mvpLocalMapPoints.clear();
                 }
                 cout << BOLDYELLOW"Frame :" << curr_.mId << " is a key Frame!!" << endl;
             }
@@ -201,15 +203,31 @@ void Tracking::addLocalMapPoints()
     for(size_t i = 0; i < curr_.N_parallel; i++)
     {
         const Matcher::p_match &matchd = curr_.mvStereoMatches[i];
+        vector<int32_t>::iterator result = find(curr_.mvInliers.begin(),curr_.mvInliers.end(),matchd.i1c);
+        if(result!= curr_.mvInliers.end())
+        {
+            if(curr_.mvDepth[matchd.i1c] > 0)
+            {
+                Vector3d p_world = curr_.mpCamera->pixel2world(
+                            Vector2d(matchd.u1c,matchd.v1c),curr_.mT_c_w,curr_.mvDepth[matchd.i1c]
+                        );
+                Vector3d n = p_world - Converter::toVector3d(curr_.GetCameraCenter());
+                n.normalize();
+                MapPoint* pMP = new MapPoint(p_world, n, curr_.mId, curr_.mvDescriptors[matchd.i1c]);
+                mvpLocalMapPoints.push_back(pMP);
+            }
 
-        Vector3d p_world = curr_.mpCamera->pixel2world(
-                    Vector2d(matchd.u1c,matchd.v1c),curr_.mT_c_w,curr_.mvDepth[matchd.i1c]
-                );
-        Vector3d n = p_world - Converter::toVector3d(curr_.GetCameraCenter());
-        n.normalize();
-        MapPoint* pMP = new MapPoint(p_world, n, curr_.mId, curr_.mvDescriptors[matchd.i1c]);
-        mvpLocalMapPoints.push_back(pMP);
+        }
     }
+    /*add the update mappoints of inliers*/
+//    for(size_t i = 0; i < llast_.mvpMapPoints.size(); i++)
+//    {
+//        mvpLocalMapPoints.push_back(llast_.mvpMapPoints[i]);
+//    }
+//    for(size_t i = 0; i < last_.mvpMapPoints.size(); i++)
+//    {
+//        mvpLocalMapPoints.push_back(last_.mvpMapPoints[i]);
+//    }
 }
 
 void Tracking::optimizeMap()
