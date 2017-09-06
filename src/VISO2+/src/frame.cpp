@@ -43,7 +43,8 @@ Frame::Frame(const Frame &frame)
       N_circular(frame.N_circular),
       N_parallel(frame.N_parallel),
       mvpMapPoints(frame.mvpMapPoints),
-      mvbOutlier(frame.mvbOutlier)
+      mvbOutlier(frame.mvbOutlier),
+      mvInliers(frame.mvInliers)
 {
     this->dims[0] = frame.dims[0];
     this->dims[1] = frame.dims[1];
@@ -158,20 +159,58 @@ void Frame::computeDescriptor()
 
 void Frame::generateMappoints()
 {
+
+    /*only keep the inliers*/
     for(int i = 0; i < N_parallel; i++)
     {
-        const Matcher::p_match &matchd = mvStereoMatches[i];
-        if(mvDepth[matchd.i1c] > 0)
-        {
-            Vector3d p_world = mpCamera->pixel2world(
-                        Vector2d(matchd.u1c,matchd.v1c),mT_c_w,mvDepth[matchd.i1c]
-                    );
-            //cout << "p_world: " << p_world(0,0) << " " << p_world(1,0) << " " << p_world(2,0) << " " <<  mvDepth[matchd.i1c] <<  endl;
-            Vector3d n = p_world - Converter::toVector3d(GetCameraCenter());
-            n.normalize();
 
-            MapPoint* pMP = new MapPoint(p_world, n, mId, mvDescriptors[matchd.i1c]);
-            mvpMapPoints[matchd.i1c] = pMP;
+        const Matcher::p_match &matchd = mvStereoMatches[i];
+        vector<int32_t>::iterator result = find(mvInliers.begin(),mvInliers.end(),matchd.i1c);
+        if(result!= mvInliers.end())
+        {
+            /*it means that the point is inliers*/
+            if(mvDepth[matchd.i1c] > 0)
+            {
+                Vector3d p_world = mpCamera->pixel2world(
+                            Vector2d(matchd.u1c,matchd.v1c),mT_c_w,mvDepth[matchd.i1c]
+                        );
+                //cout << "p_world: " << p_world(0,0) << " " << p_world(1,0) << " " << p_world(2,0) << " " <<  mvDepth[matchd.i1c] <<  endl;
+                Vector3d n = p_world - Converter::toVector3d(GetCameraCenter());
+                n.normalize();
+
+                MapPoint* pMP = new MapPoint(p_world, n, mId, mvDescriptors[matchd.i1c]);
+                mvpMapPoints[matchd.i1c] = pMP;
+            }
+
+        }
+
+    }
+}
+
+void Frame::updateCurrMappoints()
+{
+    /*only keep the inliers*/
+    for(int i = 0; i < N_parallel; i++)
+    {
+
+        const Matcher::p_match &matchd = mvStereoMatches[i];
+        vector<int32_t>::iterator result = find(mvInliers.begin(),mvInliers.end(),matchd.i1c);
+        if(result!= mvInliers.end())
+        {
+            /*it means that the point is inliers*/
+            if(mvDepth[matchd.i1c] > 0)
+            {
+                Vector3d p_world = mpCamera->pixel2world(
+                            Vector2d(matchd.u1c,matchd.v1c),mT_c_w,mvDepth[matchd.i1c]
+                        );
+                //cout << "p_world: " << p_world(0,0) << " " << p_world(1,0) << " " << p_world(2,0) << " " <<  mvDepth[matchd.i1c] <<  endl;
+                Vector3d n = p_world - Converter::toVector3d(GetCameraCenter());
+                n.normalize();
+
+                MapPoint* pMP = new MapPoint(p_world, n, mId, mvDescriptors[matchd.i1c]);
+                mvpMapPoints[matchd.i1c] = pMP;
+            }
+
         }
 
     }
@@ -187,6 +226,8 @@ void Frame::setPose(cv::Mat Tcw)
     mT_c_w = Converter::toSE3(mTcw);
     updatePoseMatrices();
 }
+
+
 
 void Frame::updatePoseMatrices()
 {

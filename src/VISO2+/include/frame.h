@@ -71,6 +71,9 @@ public:
     // 观测不到Map中的3D点
     std::vector<bool> mvbOutlier;
 
+    //当前帧优化之后认为是inliers的点
+    std::vector<int32_t> mvInliers;
+
 public: //actually it should be privite
     SE3                              mT_c_w;                         // transform from world to camera
     Mat                              mTcw;                           // Opencv type, transform from world to camera
@@ -117,8 +120,14 @@ public:
     // generate init mappoints
     void generateMappoints();
 
+    // update the mappoints
+    void updateCurrMappoints();
+
     // Set the camera pose.
     void setPose(cv::Mat Tcw); /*Set Tcw_*/
+
+    // Set the camera rotation
+
 
     // Computes rotation, translation and camera center matrices from the camera pose.
     void updatePoseMatrices();

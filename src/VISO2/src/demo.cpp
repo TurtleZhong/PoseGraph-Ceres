@@ -51,6 +51,9 @@ cv::Mat pixel2Camera(const float u, const float v, const float depth);
 cv::Point2f camera2Pixel(Mat &x3D);
 uint8_t* toPng(const cv::Mat &image);
 
+ofstream outFile1;
+
+
 int main (int argc, char** argv) {
 
     // we need the path name to 2010_03_09_drive_0019 as input argument
@@ -90,7 +93,8 @@ int main (int argc, char** argv) {
     outFile.open("../camera_poses.txt");
     
     // loop through all frames i=0:372
-    for (int32_t i=0; i<4540; i++) {
+    outFile1.open("../reprojection.txt");
+    for (int32_t i=0; i<4541; i++) {
 
         // input file names
         char base_name[256];
@@ -183,7 +187,8 @@ int main (int argc, char** argv) {
                 vector<Mat> output = drawReprojectionError(imLeft,previous_imLeft,featureMatchs,Tcl,vinliers,i);
                 //imshow("Reprojection Error!",output[0]);
                 //resize(output[1],output[1],Size(),0.9,0.5);
-                imshow("Matches",output[1]);
+                imshow("Reprojection",output[0]);
+                //cv::waitKey(0);
 
             }
 
@@ -489,6 +494,8 @@ vector<Mat> drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Ma
 
 
 
+
+
     for (int i = 0; i < featureMatches.size(); i++)
     {
         const float &u1c = Matcher::p_match(featureMatches[i]).u1c;
@@ -548,6 +555,16 @@ vector<Mat> drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Ma
                 cv::line(currImLeft,pt1_center, pixel, Scalar(255,0,0),1);
                 cv::line(currImLeft,pt1_center, pixel_gd, Scalar(0,0,255),1);
 
+                vector<int32_t>::iterator result = find(vinliers.begin(),vinliers.end(),i);
+                if(result != vinliers.end())
+                {
+
+                    stringstream ss;
+                    ss << "(" << u1c << "," << v1c << "), (" << pixel.x << "," << pixel.y << ")";
+                    outFile1 << "id: " << id << " " << "(" << u1c << "," << v1c << "), (" << pixel.x << "," << pixel.y << ")" << endl;
+                    cv::putText(currImLeft, ss.str(), pt1_center, cv::FONT_HERSHEY_PLAIN,0.5,cv::Scalar(255,255,255),1,8);
+                }
+
             }
 
         }
@@ -569,11 +586,23 @@ vector<Mat> drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Ma
         vector<int32_t>::iterator result = find(vinliers.begin(),vinliers.end(),index);
         if(result == vinliers.end())
         {
-            cv::line(outputMatches,pt1,Point2f(pt2.x, pt2.y + currMatch.rows),Scalar(0,0,255),1,8);
+//            cv::line(outputMatches,pt1,Point2f(pt2.x, pt2.y + currMatch.rows),Scalar(0,0,255),1,8);
+//            stringstream ss;
+//            ss << "(" << pt1.x << "," << pt1.y << ")";
+//            cv::putText(outputMatches, ss.str(), pt1, cv::FONT_HERSHEY_PLAIN,0.5,cv::Scalar(255,255,255),1,8);
+//            stringstream ss1;
+//            ss1 << "(" << pt2.x << "," << pt2.y << ")";
+//            cv::putText(outputMatches, ss1.str(), Point2f(pt2.x, pt2.y + currMatch.rows), cv::FONT_HERSHEY_PLAIN,0.5,cv::Scalar(255,255,255),1,8);
         }
         else
         {
             cv::line(outputMatches,pt1,Point2f(pt2.x, pt2.y + currMatch.rows),Scalar(0,255,255),1,8);
+            stringstream ss;
+            ss << "(" << pt1.x << "," << pt1.y << ")";
+            cv::putText(outputMatches, ss.str(), pt1, cv::FONT_HERSHEY_PLAIN,0.5,cv::Scalar(255,255,255),1,8);
+            stringstream ss1;
+            ss1 << "(" << pt2.x << "," << pt2.y << ")";
+            cv::putText(outputMatches, ss1.str(), Point2f(pt2.x, pt2.y + currMatch.rows), cv::FONT_HERSHEY_PLAIN,0.5,cv::Scalar(255,255,255),1,8);
         }
 
         index++;
@@ -585,7 +614,7 @@ vector<Mat> drawReprojectionError(Mat currImLeft, Mat lastImLeft, std::vector<Ma
     string tmp;
     ss1 >> tmp;
     string matchsName = "/home/m/ws_orb2/src/VISO2/Matches/" + tmp + ".png";
-    imwrite(matchsName, outputMatches);
+    //imwrite(matchsName, outputMatches);
 
     string filename = "/home/m/ws_orb2/src/VISO2/Reprojection/" + tmp + ".png";
     //imwrite(filename,outputReprojection);

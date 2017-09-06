@@ -86,6 +86,14 @@ cv::Mat Converter::toCvMat(const Eigen::Matrix<double,3,1> &m)
     return cvMat.clone();
 }
 
+cv::Mat Converter::toCvMat(const Eigen::Quaterniond &q)
+{
+    Eigen::Matrix3d eigMat =  q.toRotationMatrix();
+    cv::Mat R = toCvMat(eigMat);
+    return R.clone();
+
+}
+
 cv::Mat Converter::toCvSE3(const Eigen::Matrix<double,3,3> &R, const Eigen::Matrix<double,3,1> &t)
 {
     cv::Mat cvMat = cv::Mat::eye(4,4,CV_32F);
@@ -131,19 +139,27 @@ Eigen::Matrix<double,3,3> Converter::toMatrix3d(const cv::Mat &cvMat3)
     return M;
 }
 
-std::vector<float> Converter::toQuaternion(const cv::Mat &M)
+//std::vector<float> Converter::toQuaternion(const cv::Mat &M)
+//{
+//    Eigen::Matrix<double,3,3> eigMat = toMatrix3d(M);
+//    Eigen::Quaterniond q(eigMat);
+
+//    std::vector<float> v(4);
+//    v[0] = q.x();
+//    v[1] = q.y();
+//    v[2] = q.z();
+//    v[3] = q.w();
+
+//    return v;
+//}
+
+Eigen::Quaterniond Converter::toQuaternion(const cv::Mat &M)
 {
     Eigen::Matrix<double,3,3> eigMat = toMatrix3d(M);
     Eigen::Quaterniond q(eigMat);
-
-    std::vector<float> v(4);
-    v[0] = q.x();
-    v[1] = q.y();
-    v[2] = q.z();
-    v[3] = q.w();
-
-    return v;
+    return q;
 }
+
 
 uint8_t* Converter::toPng(cv::Mat image)
 {

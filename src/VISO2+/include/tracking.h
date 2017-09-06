@@ -28,6 +28,7 @@ public:
     Frame                   ref_;                  /*reference frame*/
     Frame                   curr_;                 /*current frame*/
     Frame                   last_;                 /*last frame*/
+    Frame                   llast_;
     Map*                    map_;                  /*map with all frames and mappoints*/
 
     std::vector<MapPoint*> mvpLocalMapPoints;
@@ -77,6 +78,8 @@ public:
 
     void searchLocalPoints();
     void trackLocalMap();
+    cv::Mat slerpRotation();
+    void updateCurrMappoints();
 
 
 

@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     outFile.open("../camera_pose.txt");
 
 
-    string dir = "/home/m/KITTI/dataset/sequences/01";
+    string dir = "/home/m/KITTI/dataset/sequences/00";
     Config::setParameterFile("/home/m/ws_orb2/src/VISO2+/config/KITTI00-02.yaml");
     Camera* camera (new Camera);
 
@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     Tracking* Tracker = new Tracking();
     Frame currentFrame,lastFrame;
 
-    for(int32_t i = 0; i < 1100; i++)
+    for(int32_t i = 0; i < 4541; i++)
     {
         char base_name[256];
         sprintf(base_name,"%06d.png",i);

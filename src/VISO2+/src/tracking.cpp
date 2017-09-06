@@ -22,6 +22,7 @@
 #include "converter.h"
 #include "optimizer.h"
 #include "new_matcher.h"
+#include <cmath>
 
 //#include "g2o_types.h"
 
@@ -31,6 +32,7 @@ Tracking::Tracking() :
     ref_ (),
     curr_ (),
     last_(),
+    llast_(),
     map_ ( new Map ),
     keyframeCount(0),
     num_lost_(0)
@@ -79,29 +81,53 @@ bool Tracking::addFrame (int id, Camera *camera, Mat imLeft, Mat imRight )
         generateFrame(id,camera,imLeft,imRight); /*now the input frame is init*/
 
         //here we need to use g2o to optimize the camera pose
-        // very important!!!
-        if(curr_.mId > 5)
+        if(curr_.mId > 4)
+        {
+            cout << "frame id = " << curr_.mId << " " << last_.mId << " " << llast_.mId << endl;
             trackLocalMap();
+            cv::Mat Rcl = slerpRotation();
+
+            Mat Rcw = Rcl * last_.mRcw;  //Rcw = Rcl * Rlw
+            Mat tcw = curr_.mtcw.clone();
+
+            Mat Tcw = cv::Mat::eye(4,4,CV_64FC1);
+            Rcw.copyTo(Tcw.rowRange(0,3).colRange(0,3));
+            tcw.copyTo(Tcw.rowRange(0,3).col(3));
+            //cout << BOLDYELLOW"T = \n" << T << endl;
+            //curr_.setPose(Tcw);
+
+            cout << BOLDMAGENTA"slerp_ Tcl = \n" << Tcw << endl;
+            cout << "estimate Tcl = \n" << curr_.mTcw << endl;
+        }
+
+
         cout << "trackLocal map is done!!!" << endl;
 
         if ( checkEstimatedPose() == true ) // a good estimation
         {
+
+            /*now we need update the mappoints*/
+            /*and we need to optimize the mappoints*/
+            curr_.updateCurrMappoints();
+
 
             num_lost_ = 0;
             if ( checkKeyFrame() == true ) // is a key-frame
             {
                 addKeyFrame();
                 addLocalMapPoints();
-                keyframeCount++;
-                if(keyframeCount > 3 )
+                //keyframeCount++;
+                if(keyframeCount == 2 )
                 {
-                    keyframeCount = 0;
-                    mvpLocalMapPoints.clear();
+                    //keyframeCount = 0;
+                    //mvpLocalMapPoints.clear();
                 }
                 cout << BOLDYELLOW"Frame :" << curr_.mId << " is a key Frame!!" << endl;
             }
 
+            llast_ = Frame(last_);
             last_ = Frame(curr_);
+
         }
         else // bad estimation due to various reasons
         {
@@ -170,6 +196,7 @@ void Tracking::addKeyFrame()
 
 void Tracking::addLocalMapPoints()
 {
+    // it seems that we need to update the local map
     // add the local mappoints into map
     for(size_t i = 0; i < curr_.N_parallel; i++)
     {
@@ -242,11 +269,15 @@ void Tracking::generateFrame(int id, Camera* camera, Mat imLeft, Mat imRight)
     //cout << BOLDYELLOW"T = \n" << T << endl;
     curr_.setPose(Tcw);
 
+    /*get inliers of the current frame*/
+    curr_.mvInliers = viso_->getInlierIndices();
+
     /*Generate Mappoints */
     curr_.mvpMapPoints= vector<MapPoint*>(curr_.N_total,static_cast<MapPoint*>(NULL));
     curr_.generateMappoints();
 
     curr_.mvbOutlier = vector<bool>(curr_.N_total,false);
+
 
     Mat depthImg = curr_.showDepth();
     cv::imshow("depthImg",depthImg);
@@ -311,4 +342,61 @@ void Tracking::trackLocalMap()
     cout << "run here ... " << endl;
 
 
+}
+
+cv::Mat Tracking::slerpRotation()
+{
+    /*first we got q(t t-2)*/
+    cv::Mat Rt_t_2 = curr_.mTcl.rowRange(0,3).colRange(0,3) * last_.mTcl.rowRange(0,3).colRange(0,3);
+    Eigen::Quaterniond qt_t_2 = Converter::toQuaternion(Rt_t_2);
+    Eigen::Quaterniond qt_t_1 = Converter::toQuaternion(curr_.mTcl.clone().rowRange(0,3).colRange(0,3));
+    Eigen::Quaterniond qt_1_t_2 = Converter::toQuaternion(last_.mTcl.clone().rowRange(0,3).colRange(0,3));
+
+    Eigen::Quaterniond nqt_t_1 = qt_1_t_2.inverse() * qt_t_2;
+
+
+
+    double d = qt_t_1.dot(nqt_t_1);
+    double absd;
+    if(absd > 0)
+        absd = d;
+    else
+        absd = -d;
+    double t1,t2;
+    if(absd > 1.0)
+    {
+        t1 = t2 = 0.5;
+    }
+    else
+    {
+        double theta = acos(absd);
+        double sintheta = sin(theta);
+        t1 = sin(0.5 * theta) / sintheta;
+        t2 = sin(0.5 * theta) / sintheta;
+    }
+    if(d < 0)
+    {
+        t1 = -t1;
+    }
+
+
+    double w = t1 * qt_t_1.w() + t2 * nqt_t_1.w();
+    double x = t1 * qt_t_1.x() + t2 * nqt_t_1.x();
+    double y = t1 * qt_t_1.y() + t2 * nqt_t_1.y();
+    double z = t1 * qt_t_1.z() + t2 * nqt_t_1.z();
+
+
+    Eigen::Quaterniond Qt_t_1(w,x,y,z);
+    Qt_t_1.normalized();
+    Eigen::Matrix3d eigMat = Qt_t_1.toRotationMatrix();
+
+    cv::Mat mRotation = Converter::toCvMat(eigMat);
+    return mRotation;
+}
+
+
+void Tracking::updateCurrMappoints()
+{
+    /*cuz the pose is updated so we need to update the mappoint to get more accuracy camera's pose*/
+    /*refer to the frame.cpp*/
 }

@@ -932,8 +932,8 @@ void Matcher::computeFeatures (uint8_t *I,const int32_t* dims,int32_t* &max1,int
 //        }
         for (vector<Matcher::maximum>::iterator it=maxima2.begin(); it!=maxima2.end(); it++)
         {
-            it->u = it->u * 2;
-            it->v = it->v * 2;
+            it->u = it->u * s;
+            it->v = it->v * s;
         }
         mvfeatureCurrentLeft.swap(maxima2);
     }
@@ -941,8 +941,8 @@ void Matcher::computeFeatures (uint8_t *I,const int32_t* dims,int32_t* &max1,int
     {
         for (vector<Matcher::maximum>::iterator it=maxima2.begin(); it!=maxima2.end(); it++)
         {
-            it->u = it->u * 2;
-            it->v = it->v * 2;
+            it->u = it->u * s;
+            it->v = it->v * s;
         }
         //mvfeatureCurrentRight.push_back(maxima1);
         mvfeatureCurrentRight.swap(maxima2);

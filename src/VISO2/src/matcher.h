@@ -62,8 +62,8 @@ public:
       outlier_disp_tolerance = 5;   //if disp > 5, then it is an outlier!
       outlier_flow_tolerance = 5;   //if flow > 5, then it is an outlier!
       multi_stage            = 1;   //多步骤匹配
-      half_resolution        = 1;   //
-      refinement             = 1;   //精度1=pixel,2=subpixel
+      half_resolution        = 0;   //
+      refinement             = 2;   //精度1=pixel,2=subpixel
     }
   };
 
