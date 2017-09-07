@@ -1,0 +1,46 @@
+%YAML:1.0
+# data
+poses_dir: /home/m/KITTI/poses/00.txt
+
+#--------------------------------------------------------------------------------------------
+# Camera Parameters. Adjust them!
+#--------------------------------------------------------------------------------------------
+
+# Camera calibration and distortion parameters (OpenCV) 
+Camera.fx: 718.856
+Camera.fy: 718.856
+Camera.cx: 607.1928
+Camera.cy: 185.2157
+
+Camera.k1: 0.0
+Camera.k2: 0.0
+Camera.p1: 0.0
+Camera.p2: 0.0
+
+Camera.width: 1241
+Camera.height: 376
+
+# Camera frames per second 
+Camera.fps: 10.0
+
+# stereo baseline times fx
+Camera.bf: 386.1448
+
+# is stereo
+
+Camera.isStereo: 1
+
+Camera.depth_scale: 5000
+
+
+# VO paras
+ThDepth: 35
+number_of_features: 500
+scale_factor: 1.2
+level_pyramid: 8
+match_ratio: 2.0
+max_num_lost: 10
+min_inliers: 10
+keyframe_rotation: 0.3
+keyframe_translation: 0.3
+map_point_erase_ratio: 0.1
