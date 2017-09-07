@@ -130,6 +130,7 @@ bool Tracking::addFrame (int id, Camera *camera, Mat imLeft, Mat imRight )
             llast_ = Frame(last_);
             last_ = Frame(curr_);
 
+
         }
         else // bad estimation due to various reasons
         {
@@ -203,9 +204,7 @@ void Tracking::addLocalMapPoints()
     for(size_t i = 0; i < curr_.N_parallel; i++)
     {
         const Matcher::p_match &matchd = curr_.mvStereoMatches[i];
-        vector<int32_t>::iterator result = find(curr_.mvInliers.begin(),curr_.mvInliers.end(),matchd.i1c);
-        if(result!= curr_.mvInliers.end())
-        {
+        //vector<int32_t>::iterator result = find(curr_.mvInliers.begin(),curr_.mvInliers.end(),matchd.i1c);
             if(curr_.mvDepth[matchd.i1c] > 0)
             {
                 Vector3d p_world = curr_.mpCamera->pixel2world(
@@ -217,7 +216,7 @@ void Tracking::addLocalMapPoints()
                 mvpLocalMapPoints.push_back(pMP);
             }
 
-        }
+
     }
     /*add the update mappoints of inliers*/
 //    for(size_t i = 0; i < llast_.mvpMapPoints.size(); i++)
@@ -293,6 +292,8 @@ void Tracking::generateFrame(int id, Camera* camera, Mat imLeft, Mat imRight)
     /*Generate Mappoints */
     curr_.mvpMapPoints= vector<MapPoint*>(curr_.N_total,static_cast<MapPoint*>(NULL));
     curr_.generateMappoints();
+    cout << BOLDGREEN"generateMappoints() mappoints.size = " << curr_.mvpMapPoints.size() << endl;
+    //generateMappoints();
 
     curr_.mvbOutlier = vector<bool>(curr_.N_total,false);
 
@@ -340,6 +341,7 @@ void Tracking::searchLocalPoints()
     if(nToMatch>0)
     {
         cout << BOLDRED"nToMatch = " << nToMatch << endl;
+        cout << BOLDRED"mappoints.size = " << curr_.mvpMapPoints.size() << endl;
     }
 
     New_Matcher matcher;
@@ -417,4 +419,34 @@ void Tracking::updateCurrMappoints()
 {
     /*cuz the pose is updated so we need to update the mappoint to get more accuracy camera's pose*/
     /*refer to the frame.cpp*/
+}
+
+void Tracking::generateMappoints()
+{
+
+    /*only keep the inliers*/
+    for(int i = 0; i < curr_.N_parallel; i++)
+    {
+
+        const Matcher::p_match &matchd = curr_.mvStereoMatches[i];
+        //vector<int32_t>::iterator result = find(mvInliers.begin(),mvInliers.end(),matchd.i1c);
+        //if(result!= mvInliers.end())
+        //{
+            /*it means that the point is inliers*/
+            if(curr_.mvDepth[matchd.i1p] > 0)
+            {
+                Vector3d p_world = last_.mpCamera->pixel2world(
+                            Vector2d(matchd.u1p,matchd.v1p),last_.mT_c_w,last_.mvDepth[matchd.i1p]
+                        );
+                //cout << "p_world: " << p_world(0,0) << " " << p_world(1,0) << " " << p_world(2,0) << " " <<  mvDepth[matchd.i1c] <<  endl;
+                Vector3d n = p_world - Converter::toVector3d(last_.GetCameraCenter());
+                n.normalize();
+
+                MapPoint* pMP = new MapPoint(p_world, n, curr_.mId, last_.mvDescriptors[matchd.i1p]);
+                curr_.mvpMapPoints[matchd.i1c] = pMP;
+            }
+
+        //}
+
+    }
 }

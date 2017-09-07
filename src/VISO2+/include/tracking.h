@@ -81,6 +81,7 @@ public:
     cv::Mat slerpRotation();
     void updateCurrMappoints();
 
+    void generateMappoints();
 
 
 

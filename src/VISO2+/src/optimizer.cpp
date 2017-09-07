@@ -33,7 +33,7 @@ int optimizer::PoseOptimization(Frame* frame, Frame* lastframe)
 
     // Set Frame vertex
     g2o::VertexSE3Expmap * vSE3 = new g2o::VertexSE3Expmap();
-    vSE3->setEstimate(Converter::toSE3Quat(lastframe->mTcw));
+    vSE3->setEstimate(Converter::toSE3Quat(frame->mTcw));
     vSE3->setId(0);
     vSE3->setFixed(false);
     optimizer.addVertex(vSE3);
@@ -172,7 +172,7 @@ int optimizer::PoseOptimization(Frame* frame, Frame* lastframe)
     {
         //cout << "vpEdgesStereo.size() = " << vpEdgesStereo.size() << endl;
 
-        vSE3->setEstimate(Converter::toSE3Quat(lastframe->mTcw));
+        vSE3->setEstimate(Converter::toSE3Quat(frame->mTcw));
         //cout << "vSE3.estimate = \n" << frame->mTcw << endl;
 
         optimizer.initializeOptimization(0);

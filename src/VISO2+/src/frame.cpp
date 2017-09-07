@@ -165,9 +165,9 @@ void Frame::generateMappoints()
     {
 
         const Matcher::p_match &matchd = mvStereoMatches[i];
-        vector<int32_t>::iterator result = find(mvInliers.begin(),mvInliers.end(),matchd.i1c);
-        if(result!= mvInliers.end())
-        {
+        //vector<int32_t>::iterator result = find(mvInliers.begin(),mvInliers.end(),matchd.i1c);
+        //if(result!= mvInliers.end())
+        //{
             /*it means that the point is inliers*/
             if(mvDepth[matchd.i1c] > 0)
             {
@@ -182,7 +182,7 @@ void Frame::generateMappoints()
                 mvpMapPoints[matchd.i1c] = pMP;
             }
 
-        }
+        //}
 
     }
 }
@@ -195,8 +195,8 @@ void Frame::updateCurrMappoints()
 
         const Matcher::p_match &matchd = mvStereoMatches[i];
         vector<int32_t>::iterator result = find(mvInliers.begin(),mvInliers.end(),matchd.i1c);
-        if(result!= mvInliers.end())
-        {
+        //if(result!= mvInliers.end())
+        //{
             /*it means that the point is inliers*/
             if(mvDepth[matchd.i1c] > 0)
             {
@@ -211,7 +211,7 @@ void Frame::updateCurrMappoints()
                 mvpMapPoints[matchd.i1c] = pMP;
             }
 
-        }
+        //}
 
     }
 }
