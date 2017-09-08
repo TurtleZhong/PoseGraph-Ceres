@@ -3,6 +3,8 @@
 #include "string.h"
 #include <fstream>
 
+namespace POSE_GRAPH
+{
 GroundTruth::GroundTruth()
 {
 
@@ -95,3 +97,6 @@ Mat GroundTruth::getFrametcw(int frameID)
     else
         return Mat();
 }
+}
+
+

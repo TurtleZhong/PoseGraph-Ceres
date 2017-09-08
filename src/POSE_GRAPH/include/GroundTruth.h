@@ -15,7 +15,8 @@
 using namespace std;
 using namespace cv;
 
-
+namespace POSE_GRAPH
+{
 class GroundTruth
 {
 public:
@@ -34,6 +35,8 @@ public:
     string sequenceDir;
 
 };
+}
+
 
 
 

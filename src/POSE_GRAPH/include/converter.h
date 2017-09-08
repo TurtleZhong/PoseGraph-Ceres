@@ -29,8 +29,8 @@
 #include<sophus/so3.h>
 #include<sophus/se3.h>
 
-
-
+namespace POSE_GRAPH
+{
 class Converter
 {
 public:
@@ -59,13 +59,11 @@ public:
     static Sophus::SE3 toSE3(const cv::Mat &cvT);
     static cv::Mat toCvMat(const Eigen::Vector3d &m, int flag);
 
-
-
-
-
-
-
 };
+
+
+}
+
 
 // namespace myslam
 

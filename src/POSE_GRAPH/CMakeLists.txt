@@ -61,11 +61,15 @@ ${EIGEN3_INCLUDE_DIR}
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 add_library(${PROJECT_NAME} SHARED
-    src/config.cpp
-    src/converter.cpp
-    src/GroundTruth.cpp
-    src/camera.cpp
-    src/frame.cpp
+    src/config.cc
+    src/converter.cc
+    src/GroundTruth.cc
+    src/camera.cc
+    src/Frame.cc
+    src/MapPoint.cc
+    src/ORBextractor.cc
+    src/ORBmatcher.cc
+    src/SequenceRun.cc
 
 )
 
@@ -83,4 +87,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 
 add_executable(param_reader test/param_reader.cpp )
 target_link_libraries(param_reader ${PROJECT_NAME})
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+
+add_executable(frame_test test/frame_test.cpp )
+target_link_libraries(frame_test ${PROJECT_NAME})
 

@@ -21,6 +21,8 @@
 
 #include "converter.h"
 
+namespace POSE_GRAPH
+{
 std::vector<cv::Mat> Converter::toDescriptorVector(const cv::Mat &Descriptors)
 {
     std::vector<cv::Mat> vDesc;
@@ -35,8 +37,8 @@ g2o::SE3Quat Converter::toSE3Quat(const cv::Mat &cvT)
 {
     Eigen::Matrix<double,3,3> R;
     R << cvT.at<double>(0,0), cvT.at<double>(0,1), cvT.at<double>(0,2),
-         cvT.at<double>(1,0), cvT.at<double>(1,1), cvT.at<double>(1,2),
-         cvT.at<double>(2,0), cvT.at<double>(2,1), cvT.at<double>(2,2);
+            cvT.at<double>(1,0), cvT.at<double>(1,1), cvT.at<double>(1,2),
+            cvT.at<double>(2,0), cvT.at<double>(2,1), cvT.at<double>(2,2);
 
     Eigen::Matrix<double,3,1> t(cvT.at<double>(0,3), cvT.at<double>(1,3), cvT.at<double>(2,3));
 
@@ -81,7 +83,7 @@ cv::Mat Converter::toCvMat(const Eigen::Matrix<double,3,1> &m)
 {
     cv::Mat cvMat(3,1,CV_64F);
     for(int i=0;i<3;i++)
-            cvMat.at<double>(i)=m(i);
+        cvMat.at<double>(i)=m(i);
 
     return cvMat.clone();
 }
@@ -133,8 +135,8 @@ Eigen::Matrix<double,3,3> Converter::toMatrix3d(const cv::Mat &cvMat3)
     Eigen::Matrix<double,3,3> M;
 
     M << cvMat3.at<double>(0,0), cvMat3.at<double>(0,1), cvMat3.at<double>(0,2),
-         cvMat3.at<double>(1,0), cvMat3.at<double>(1,1), cvMat3.at<double>(1,2),
-         cvMat3.at<double>(2,0), cvMat3.at<double>(2,1), cvMat3.at<double>(2,2);
+            cvMat3.at<double>(1,0), cvMat3.at<double>(1,1), cvMat3.at<double>(1,2),
+            cvMat3.at<double>(2,0), cvMat3.at<double>(2,1), cvMat3.at<double>(2,2);
 
     return M;
 }
@@ -181,8 +183,8 @@ Sophus::SE3 Converter::toSE3(const cv::Mat &cvT)
 {
     Eigen::Matrix<double,3,3> R;
     R << cvT.at<double>(0,0), cvT.at<double>(0,1), cvT.at<double>(0,2),
-         cvT.at<double>(1,0), cvT.at<double>(1,1), cvT.at<double>(1,2),
-         cvT.at<double>(2,0), cvT.at<double>(2,1), cvT.at<double>(2,2);
+            cvT.at<double>(1,0), cvT.at<double>(1,1), cvT.at<double>(1,2),
+            cvT.at<double>(2,0), cvT.at<double>(2,1), cvT.at<double>(2,2);
 
     Eigen::Matrix<double,3,1> t(cvT.at<double>(0,3), cvT.at<double>(1,3), cvT.at<double>(2,3));
     Sophus::SE3 SE3_Rt(R,t);
@@ -212,4 +214,7 @@ cv::Mat Converter::toCvMat(const Eigen::Vector3d &m, int flag = 1)
     }
 
 }
+
+}
+
 
