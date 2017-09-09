@@ -21,6 +21,7 @@
 #include "Frame.h"
 #include "converter.h"
 #include "ORBmatcher.h"
+#include "config.h"
 #include <thread>
 
 namespace POSE_GRAPH
@@ -157,6 +158,10 @@ void Frame::UpdatePoseMatrices()
     mRwc = mRcw.t();
     mtcw = mTcw.rowRange(0,3).col(3);
     mOw = -mRcw.t()*mtcw;
+    mTwc = mTcw.clone(); /*make sure 4*4 */
+    mRwc.copyTo(mTwc.rowRange(0,3).colRange(0,3));
+    mOw.copyTo(mTwc.rowRange(0,3).col(3));
+    //cout << "Twc = " << mTwc << endl;
 }
 
 bool Frame::isInFrustum(MapPoint *pMP, float viewingCosLimit)
@@ -216,6 +221,33 @@ bool Frame::isInFrustum(MapPoint *pMP, float viewingCosLimit)
 
     return true;
 }
+
+
+bool Frame::isInSearchRange(const cv::Mat &M)
+{
+    cv::Mat twc = GetCameraCenter();
+    float centerA = twc.at<float>(0);
+    float centerB = twc.at<float>(1);
+    float centerC = twc.at<float>(2);
+
+    float x = M.at<float>(0);
+    float y = M.at<float>(1);
+    float z = M.at<float>(2);
+
+    float distA = x - centerA;
+    float distB = y - centerB;
+    float distC = z - centerC;
+    float dist = distA*distA + distB*distB + distC*distC;
+
+    float searchRadius = (float)Config::get<int>("search_radius");
+
+    if(dist > (searchRadius*searchRadius))
+        return false;
+    else
+        return true;
+
+}
+
 
 vector<size_t> Frame::GetFeaturesInArea(const float &x, const float  &y, const float  &r, const int minLevel, const int maxLevel) const
 {

@@ -72,6 +72,8 @@ public:
     // and fill variables of the MapPoint to be used by the tracking
     bool isInFrustum(MapPoint* pMP, float viewingCosLimit);
 
+    bool isInSearchRange(const cv::Mat& M);
+
     // Compute the cell of a keypoint (return false if outside the grid)
     bool PosInGrid(const cv::KeyPoint &kp, int &posX, int &posY);
 
@@ -147,6 +149,7 @@ public:
 
     // Camera pose.
     cv::Mat mTcw;
+    cv::Mat mTwc;
 
     // Current and Next Frame id.
     static long unsigned int nNextId;

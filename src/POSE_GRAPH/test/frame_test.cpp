@@ -35,10 +35,12 @@ int main(int argc, char *argv[])
 
         const std::vector<cv::KeyPoint> &keypoints = currentFrame.mvKeys;
 
-        for(std::vector<cv::KeyPoint>::const_iterator vkeys = keypoints.begin(); vkeys!= keypoints.end(); vkeys++)
-        {
-            cout << BOLDGREEN"keypoints.u = " << (*vkeys).pt.x <<  " keypoints.v = " << (*vkeys).pt.y << endl;
-        }
+//        for(std::vector<cv::KeyPoint>::const_iterator vkeys = keypoints.begin(); vkeys!= keypoints.end(); vkeys++)
+//        {
+//            cout << BOLDGREEN"keypoints.u = " << (*vkeys).pt.x <<  " keypoints.v = " << (*vkeys).pt.y << endl;
+//        }
+
+        cout << "currentFrame.id = " << currentFrame.mnId << endl;
 
         cv::imshow("currentFrame", sequenceRun->mImGray);
 

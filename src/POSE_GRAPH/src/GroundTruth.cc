@@ -30,7 +30,10 @@ void GroundTruth::loadPoses()
                 inFile >> P.at<double>(row,col);
             }
         }
-        poses.push_back(P);
+        P.convertTo(P,CV_32FC1);
+        cv::Mat tmp(P.rows, P.cols, CV_32FC1);
+        tmp = P.clone();
+        poses.push_back(tmp);
         inFile.get();
         count++;
     }
@@ -97,6 +100,24 @@ Mat GroundTruth::getFrametcw(int frameID)
     else
         return Mat();
 }
+
+Mat GroundTruth::getFrameTcw(int frameID)
+{
+    if (frameID < (int)poses.size())
+    {
+        cv::Mat Tcw = Mat::eye(4,4,CV_32FC1);
+        cv::Mat Rcw = getFrameRcw(frameID);
+        cv::Mat tcw = getFrametcw(frameID);
+
+        Rcw.copyTo(Tcw.rowRange(0,3).colRange(0,3));
+        tcw.copyTo(Tcw.rowRange(0,3).col(3));
+
+        return Tcw;
+    }
+    else
+        return Mat();
+}
+
 }
 
 

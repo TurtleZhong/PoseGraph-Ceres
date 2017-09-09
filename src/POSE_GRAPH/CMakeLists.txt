@@ -42,12 +42,12 @@ find_package(Pangolin REQUIRED)
 find_package( Sophus REQUIRED )
 include_directories( ${Sophus_INCLUDE_DIRS} )
 
-#g2o
-#SET( G2O_ROOT /usr/local/include/g2o )
-#FIND_PACKAGE( G2O REQUIRED )
+# g2o
+SET( G2O_ROOT /usr/local/include/g2o )
+FIND_PACKAGE( G2O REQUIRED )
 # CSparse
-#FIND_PACKAGE( CSparse REQUIRED )
-#INCLUDE_DIRECTORIES( ${G2O_INCLUDE_DIR} ${CSPARSE_INCLUDE_DIR} )
+FIND_PACKAGE( CSparse REQUIRED )
+INCLUDE_DIRECTORIES( ${G2O_INCLUDE_DIR} ${CSPARSE_INCLUDE_DIR} )
 
 include_directories(
 ${PROJECT_SOURCE_DIR}
@@ -78,7 +78,6 @@ ${OpenCV_LIBS}
 ${Sophus_LIBRARIES}
 ${EIGEN3_LIBS}
 ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
-${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 )
 
 # Build examples
@@ -86,10 +85,15 @@ ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 
 add_executable(param_reader test/param_reader.cpp )
-target_link_libraries(param_reader ${PROJECT_NAME})
+target_link_libraries(param_reader ${PROJECT_NAME} g2o_core g2o_types_slam3d)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 
 add_executable(frame_test test/frame_test.cpp )
-target_link_libraries(frame_test ${PROJECT_NAME})
+target_link_libraries(frame_test ${PROJECT_NAME} g2o_core g2o_types_slam3d)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+
+add_executable(pose_graph_try1 test/pose_graph_try1.cpp )
+target_link_libraries(pose_graph_try1 ${PROJECT_NAME} g2o_core g2o_types_slam3d g2o_solver_csparse g2o_stuff g2o_csparse_extension ${CSPARSE_LIBRARY})
 

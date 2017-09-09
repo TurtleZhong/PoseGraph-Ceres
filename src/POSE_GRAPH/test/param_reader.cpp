@@ -10,9 +10,12 @@ int main(int argc, char *argv[])
 
     GroundTruth gd;
     cout << "gd.getFrameTwc(0) = \n" << gd.getFrameTwc(0) << endl;
-    cv::Mat T = gd.getFrameTwc(0);
+    cv::Mat T = gd.getFrameTwc(2);
+    cv::Mat T1 = gd.getFrameTcw(2);
+    cv::Mat result = T * T1;
     T.convertTo(T,CV_64FC1);
     cout << "T = \n" << T <<  T.type() << endl;
+    cout << "result = " << result << endl;
 
     return 0;
 }

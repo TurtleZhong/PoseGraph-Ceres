@@ -28,6 +28,7 @@ public:
     Mat getFrametwc(int frameID);
     Mat getFrameRcw(int frameID);
     Mat getFrametcw(int frameID);
+    Mat getFrameTcw(int frameID);
     void loadPoses();
 
 public:

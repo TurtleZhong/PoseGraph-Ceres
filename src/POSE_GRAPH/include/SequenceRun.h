@@ -5,8 +5,9 @@
 #include<opencv2/features2d/features2d.hpp>
 
 
-#include"Frame.h"
-#include"ORBextractor.h"
+#include "Frame.h"
+#include "ORBextractor.h"
+#include "GroundTruth.h"
 
 
 
@@ -19,6 +20,7 @@ public:
     // constructor
     SequenceRun();
     bool GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp);
+    bool GenerateFrameMappoints();
 
 public:
     Frame mCurrentFrame;
@@ -27,6 +29,9 @@ public:
 protected:
     //ORB
     ORBextractor* mpORBextractorLeft, *mpORBextractorRight;
+
+    //Ground Truth
+    GroundTruth gd;
 
     //Calibration matrix
     cv::Mat mK;

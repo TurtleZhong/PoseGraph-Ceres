@@ -104,6 +104,71 @@ bool SequenceRun::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRe
 
     mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mK,mDistCoef,mbf,mThDepth);
 
+    /*now we need to set the pose of current frame*/
+
+    mCurrentFrame.SetPose(gd.getFrameTcw(mCurrentFrame.mnId));
+
+    /*after set the frame pose we can generate the mappoints*/
+
+    GenerateFrameMappoints();
+
+    return true;
+}
+
+bool SequenceRun::GenerateFrameMappoints()
+{
+    /*in GrabImageStereo() we have set the frame pose(groundtruth)*/
+
+    /*now we need to create the mappoints*/
+
+    // We sort points according to their measured depth by the stereo sensor
+    vector<pair<float,int> > vDepthIdx;
+    vDepthIdx.reserve(mCurrentFrame.N);
+
+    for(int i=0; i<mCurrentFrame.N;i++)
+    {
+        float z = mCurrentFrame.mvDepth[i];
+        if(z>0)
+        {
+            vDepthIdx.push_back(make_pair(z,i));
+        }
+    }
+
+    if(vDepthIdx.empty())
+        return false;
+
+    sort(vDepthIdx.begin(),vDepthIdx.end());
+
+    float middleDistance = vDepthIdx[vDepthIdx.size()/2 +1].first;
+    float minDistance,maxDistance;
+    minDistance = middleDistance * 0.4;
+    maxDistance = middleDistance * 1.3;
+    // We insert points (minDistance < depth < MaxDistance)
+
+    int nPoints = 0;
+    for(size_t j=0; j<vDepthIdx.size();j++)
+    {
+        int i = vDepthIdx[j].second;
+        float depth = vDepthIdx[j].first;
+
+        if(depth > minDistance && depth < maxDistance)
+        {
+            /*generate the mappoints*/
+            cv::Mat x3D = mCurrentFrame.UnprojectStereo(i);
+            MapPoint* pMap = new MapPoint(x3D, &mCurrentFrame, i);
+
+            mCurrentFrame.mvpMapPoints[i] = pMap;
+            mCurrentFrame.mvbOutlier[i] = false;
+            nPoints++;
+
+        }
+
+    }
+//    cout << "minDistance = " << minDistance << endl;
+//    cout << "maxDistance = " << maxDistance << endl;
+//    cout << "generate mappoints: " << nPoints << endl;
+
+
     return true;
 }
 
