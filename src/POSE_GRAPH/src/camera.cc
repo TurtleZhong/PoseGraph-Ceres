@@ -67,6 +67,19 @@ namespace POSE_GRAPH
                     );
     }
 
+    cv::Point3f Camera::pixel2camera(const cv::Point2f &p_p, float depth)
+    {
+        /*
+         * x = (u - cx)*z / fx
+         * v = (v - cy)*z / fy
+        */
+        return cv::Point3f (
+                    ( p_p.x - cx_ ) * depth / fx_,
+                    ( p_p.y - cy_ ) * depth / fy_,
+                    depth
+                    );
+    }
+
     Vector2d Camera::world2pixel(const Eigen::Vector3d &p_w, const Sophus::SE3 &T_c_w)
     {
         return camera2pixel( world2camera(p_w, T_c_w));

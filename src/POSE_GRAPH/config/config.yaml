@@ -55,4 +55,4 @@ ORBextractor.iniThFAST: 20
 ORBextractor.minThFAST: 7
 
 ##pose_graph
-search_radius: 15
+search_radius: 6

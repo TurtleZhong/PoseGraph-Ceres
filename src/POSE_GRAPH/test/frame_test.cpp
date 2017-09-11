@@ -18,6 +18,7 @@ int main(int argc, char *argv[])
     string dir = Config::get<string>("sequence_dir");
 
     SequenceRun* sequenceRun = new SequenceRun();
+    Frame lastFrame;
 
     for(int32_t i = 0; i < 4541; i++)
     {
@@ -44,9 +45,22 @@ int main(int argc, char *argv[])
 
         cv::imshow("currentFrame", sequenceRun->mImGray);
 
+        if(i > 2)
+        {
+            cv::Mat deltaT = currentFrame.mTcw * lastFrame.mTwc; //-->Tcl
+            cv::Mat t = deltaT.rowRange(0,3).col(3);
+            cv::Mat t1 = Mat::zeros(t.rows,t.cols,t.type());
+            cout << "delta T = \n" << deltaT << endl;
+            //double dist = cvNorm(t, NORM_L2 );
+            //cout << "norm L2 = " << dist << endl;
+        }
+
+
+
 
         cv::waitKey(27);
 
+        lastFrame = currentFrame;
 
 
     }

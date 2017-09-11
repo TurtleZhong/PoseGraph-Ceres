@@ -158,9 +158,9 @@ void Frame::UpdatePoseMatrices()
     mRwc = mRcw.t();
     mtcw = mTcw.rowRange(0,3).col(3);
     mOw = -mRcw.t()*mtcw;
-    mTwc = mTcw.clone(); /*make sure 4*4 */
-    mRwc.copyTo(mTwc.rowRange(0,3).colRange(0,3));
-    mOw.copyTo(mTwc.rowRange(0,3).col(3));
+    mTwc = mTcw.inv(); /*make sure 4*4 */
+//    mRwc.copyTo(mTwc.rowRange(0,3).colRange(0,3));
+//    mOw.copyTo(mTwc.rowRange(0,3).col(3));
     //cout << "Twc = " << mTwc << endl;
 }
 
