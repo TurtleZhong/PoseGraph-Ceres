@@ -6,6 +6,7 @@
 #include "converter.h"
 #include "SequenceRun.h"
 #include "ORBmatcher.h"
+#include <opencv2/opencv.hpp>
 
 /*g2o parts*/
 #include <g2o/types/slam3d/types_slam3d.h>
@@ -37,7 +38,7 @@ void checkForPoseGraph(vector<Frame>& vFrames, Frame &currentFrame, g2o::SparseO
 void checkFrame(Frame &frame1, Frame &frame2, g2o::SparseOptimizer &optimizer);
 std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFrame);
 int findFeatureMatches(Frame &lastFrame, Frame &currentFrame, vector<DMatch> &matches, string method = "BF");
-RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2, vector<DMatch> matches);
+RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2, vector<DMatch> &matches);
 
 int main(int argc, char *argv[])
 {
@@ -158,7 +159,7 @@ void checkFrame(Frame &frame1, Frame &frame2, g2o::SparseOptimizer &optimizer)
     //int nmatches = matcher.SearchByProjection(frame2,frame1,5,false);
     vector<DMatch> matches;
     int nmatches = findFeatureMatches(frame1,frame2,matches);
-    cout << "matches = " << nmatches << " ";
+    cout << "matches = " << matches.size() << " ";
 
     if(frame2.mnId - frame1.mnId == 1)
     {
@@ -353,7 +354,7 @@ int findFeatureMatches(Frame &lastFrame,
 }
 
 /*we need a simple function to estimate the inliers and pose*/
-RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2, vector<DMatch> matches)
+RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2, vector<DMatch> &matches)
 {
     RESULT_OF_PNP result;
     // 第一个帧的三维点

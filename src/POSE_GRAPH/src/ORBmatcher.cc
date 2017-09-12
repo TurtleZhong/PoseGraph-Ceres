@@ -1335,18 +1335,18 @@ int ORBmatcher::MatcheTwoFrames(Frame &CurrentFrame, const Frame &LastFrame, con
         rotHist[i].reserve(500);
     const float factor = 1.0f/HISTO_LENGTH;
 
-    const cv::Mat Rcw = CurrentFrame.mTcw.rowRange(0,3).colRange(0,3);
-    const cv::Mat tcw = CurrentFrame.mTcw.rowRange(0,3).col(3);
+//    const cv::Mat Rcw = CurrentFrame.mTcw.rowRange(0,3).colRange(0,3);
+//    const cv::Mat tcw = CurrentFrame.mTcw.rowRange(0,3).col(3);
 
-    const cv::Mat twc = -Rcw.t()*tcw;
+//    const cv::Mat twc = -Rcw.t()*tcw;
 
-    const cv::Mat Rlw = LastFrame.mTcw.rowRange(0,3).colRange(0,3);
-    const cv::Mat tlw = LastFrame.mTcw.rowRange(0,3).col(3);
+//    const cv::Mat Rlw = LastFrame.mTcw.rowRange(0,3).colRange(0,3);
+//    const cv::Mat tlw = LastFrame.mTcw.rowRange(0,3).col(3);
 
-    const cv::Mat tlc = Rlw*twc+tlw;
+//    const cv::Mat tlc = Rlw*twc+tlw;
 
-    const bool bForward = tlc.at<float>(2)>CurrentFrame.mb && !bMono;
-    const bool bBackward = -tlc.at<float>(2)>CurrentFrame.mb && !bMono;
+//    const bool bForward = tlc.at<float>(2)>CurrentFrame.mb && !bMono;
+//    const bool bBackward = -tlc.at<float>(2)>CurrentFrame.mb && !bMono;
 
     for(int i=0; i<LastFrame.N; i++)
     {
@@ -1357,18 +1357,17 @@ int ORBmatcher::MatcheTwoFrames(Frame &CurrentFrame, const Frame &LastFrame, con
             if(!LastFrame.mvbOutlier[i])
             {
                 // Project
-//                cv::Mat x3Dw = pMP->GetWorldPos();
-//                cv::Mat x3Dc = Rcw*x3Dw+tcw;
+                cv::Mat x3Dc = pMP->GetWorldPos();
 
-//                const float xc = x3Dc.at<float>(0);
-//                const float yc = x3Dc.at<float>(1);
-//                const float invzc = 1.0/x3Dc.at<float>(2);
+                const float xc = x3Dc.at<float>(0);
+                const float yc = x3Dc.at<float>(1);
+                const float invzc = 1.0/x3Dc.at<float>(2);
 
-//                if(invzc<0)
-//                    continue;
+                if(invzc<0)
+                    continue;
 
-                float u = LastFrame.mvKeys[i].pt.x;//CurrentFrame.fx*xc*invzc+CurrentFrame.cx
-                float v = LastFrame.mvKeys[i].pt.y;;//CurrentFrame.fy*yc*invzc+CurrentFrame.cy
+                float u = CurrentFrame.fx*xc*invzc+CurrentFrame.cx;
+                float v = CurrentFrame.fy*yc*invzc+CurrentFrame.cy;
 
                 if(u<CurrentFrame.mnMinX || u>CurrentFrame.mnMaxX)
                     continue;
@@ -1382,12 +1381,13 @@ int ORBmatcher::MatcheTwoFrames(Frame &CurrentFrame, const Frame &LastFrame, con
 
                 vector<size_t> vIndices2;
 
-                if(bForward)
-                    vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, nLastOctave);
-                else if(bBackward)
-                    vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, 0, nLastOctave);
-                else
-                    vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, nLastOctave-1, nLastOctave+1);
+//                if(bForward)
+//                    vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, nLastOctave);
+//                else if(bBackward)
+//                    vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, 0, nLastOctave);
+//                else
+//                    vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, nLastOctave-1, nLastOctave+1);
+                vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, 0, nLastOctave);
 
                 if(vIndices2.empty())
                     continue;
@@ -1400,17 +1400,17 @@ int ORBmatcher::MatcheTwoFrames(Frame &CurrentFrame, const Frame &LastFrame, con
                 for(vector<size_t>::const_iterator vit=vIndices2.begin(), vend=vIndices2.end(); vit!=vend; vit++)
                 {
                     const size_t i2 = *vit;
-                    if(CurrentFrame.mvpMapPoints[i2])
-                        if(CurrentFrame.mvpMapPoints[i2]->Observations()>0)
-                            continue;
+//                    if(CurrentFrame.mvpMapPoints[i2])
+//                        if(CurrentFrame.mvpMapPoints[i2]->Observations()>0)
+//                            continue;
 
-                    if(CurrentFrame.mvuRight[i2]>0)
-                    {
-                        const float ur = u - CurrentFrame.mvuRight[i2];
-                        const float er = fabs(ur - CurrentFrame.mvuRight[i2]);
-                        if(er>radius)
-                            continue;
-                    }
+//                    if(CurrentFrame.mvuRight[i2]>0)
+//                    {
+//                        const float ur = u - CurrentFrame.mvuRight[i2];
+//                        const float er = fabs(ur - CurrentFrame.mvuRight[i2]);
+//                        if(er>radius)
+//                            continue;
+//                    }
 
                     const cv::Mat &d = CurrentFrame.mDescriptors.row(i2);
 
@@ -1425,10 +1425,11 @@ int ORBmatcher::MatcheTwoFrames(Frame &CurrentFrame, const Frame &LastFrame, con
 
                 if(bestDist<=TH_HIGH)
                 {
-                    CurrentFrame.mvpMapPoints[bestIdx2]=pMP;
+                    //CurrentFrame.mvpMapPoints[bestIdx2]=pMP;
                     /*add by zhong*/
                     CurrentFrame.matchesId[bestIdx2] = i;
                     nmatches++;
+                    //cout << "bestDist = " << bestDist << " ";
 
 
 
@@ -1472,6 +1473,7 @@ int ORBmatcher::MatcheTwoFrames(Frame &CurrentFrame, const Frame &LastFrame, con
             }
         }
     }
+    //cout << endl;
 
     return nmatches;
 }

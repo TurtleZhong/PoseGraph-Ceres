@@ -18,6 +18,7 @@
 #include <g2o/core/robust_kernel.h>
 #include <g2o/core/robust_kernel_impl.h>
 #include <g2o/core/optimization_algorithm_levenberg.h>
+#include <g2o/core/estimate_propagator.h>
 
 
 #include <fstream>
@@ -31,21 +32,24 @@ struct RESULT_OF_PNP
     cv::Mat tvec;
     int inliers;
 };
+double normofTransform( cv::Mat rvec, cv::Mat tvec );
 
 
 void checkForPoseGraph(vector<Frame>& vFrames, Frame &currentFrame, g2o::SparseOptimizer &optimizer);
 void checkFrame(Frame &frame1, Frame &frame2, g2o::SparseOptimizer &optimizer);
 std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFrame);
 int findFeatureMatches(Frame &lastFrame, Frame &currentFrame, vector<DMatch> &matches, string method = "BF");
-//RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2, vector<DMatch> matches);
+RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2);
 
 int main(int argc, char *argv[])
 {
 
 
 
-    Config::setParameterFile("/home/m/ws_orb2/src/POSE_GRAPH/config/config.yaml");
+    Config::setParameterFile("/home/m/ws_orb2/src/POSE_GRAPH/config/config08.yaml");
     string dir = Config::get<string>("sequence_dir");
+    /*get the sequence length*/
+    int sequenceLength = Config::get<int>("sequence_length");
 
     /*g2o parts*/
 
@@ -67,7 +71,7 @@ int main(int argc, char *argv[])
     ofstream outFile;
     outFile.open("../camera_poses.txt");
 
-    for(int32_t i = 0; i < 2761; i++)
+    for(int32_t i = 0; i < sequenceLength; i++)
     {
         char base_name[256];
         sprintf(base_name,"%06d.png",i);
@@ -126,7 +130,15 @@ int main(int argc, char *argv[])
 
     cout<<RESET"optimizing pose graph, vertices: "<<optimizer.vertices().size()<<endl;
     optimizer.save("../result/g2o/result_before.g2o");
+
+
     optimizer.initializeOptimization();
+
+
+    g2o::EstimatePropagatorCost costFunction(&optimizer);
+    optimizer.computeInitialGuess(costFunction);
+
+
     optimizer.optimize( 1000 );
     optimizer.save( "../result/g2o/result_after.g2o" );
     cout<<"Optimization done."<<endl;
@@ -155,7 +167,7 @@ void checkFrame(Frame &frame1, Frame &frame2, g2o::SparseOptimizer &optimizer)
 
     ORBmatcher matcher(0.7,true);
 
-    int nmatches = matcher.SearchByProjection(frame2,frame1,5,false);
+    int nmatches = matcher.MatcheTwoFrames(frame2,frame1,5,false);
     //vector<DMatch> matches;
     //int nmatches = findFeatureMatches(frame1,frame2,matches);
     cout << "matches = " << nmatches << " ";
@@ -176,27 +188,32 @@ void checkFrame(Frame &frame1, Frame &frame2, g2o::SparseOptimizer &optimizer)
         //        information(3,3) = information(4,4) = information(5,5) = 100;
 
         edge->setInformation( information );
+
         Eigen::Isometry3d T = Converter::toIsometry3d(frame2.mTcw * frame1.mTwc);
         edge->setMeasurement( T );
         optimizer.addEdge(edge);
     }
 
-    else if(nmatches > 330)
+    else if(nmatches > 180)
     {
 
-        cv::Mat T = frame1.mTwc;
-        cv::Mat T1 = frame2.mTcw;
+//        cv::Mat T = frame1.mTwc;
+//        cv::Mat T1 = frame2.mTcw;
 
-        cv::Mat deltaT = T1 * T;
-        cv::Mat t = deltaT.rowRange(0,3).col(3);
+//        cv::Mat deltaT = T1 * T;
+//        cv::Mat t = deltaT.rowRange(0,3).col(3);
 
-        double x = (double)t.at<float>(0);
-        double y = (double)t.at<float>(1);
-        double z = (double)t.at<float>(2);
+//        double x = (double)t.at<float>(0);
+//        double y = (double)t.at<float>(1);
+//        double z = (double)t.at<float>(2);
 
-        double dist = sqrt(x*x + y*y +z*z);
+//        double dist = sqrt(x*x + y*y +z*z);
 
-        if (dist < 1.7)
+        /*now we check the motion and inliers of this two frame*/
+        RESULT_OF_PNP result = motionEstimate(frame1,frame2);
+        double norm = normofTransform(result.rvec,result.tvec);
+
+        if(result.inliers > 80 && norm < 1.2)
         {
             // EDGE
             g2o::EdgeSE3* edge = new g2o::EdgeSE3();
@@ -215,7 +232,6 @@ void checkFrame(Frame &frame1, Frame &frame2, g2o::SparseOptimizer &optimizer)
             optimizer.addEdge(edge);
 
             cout << BOLDYELLOW"add a new edge! " << frame2.mnId << " --> " << frame1.mnId <<  endl;
-
         }
 
     }
@@ -233,14 +249,14 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
     {
         cv::Mat twc = Frame(*vit).GetCameraCenter();
 
-        if(vit == vFrames.end() - 1)
+        if(currentFrame.mnId - Frame(*vit).mnId < 5) /*near by frames --> can write to the config files*/
         {
             candidates.push_back(*vit);
         }
         bool isInRange = currentFrame.isInSearchRange(twc);
         if(isInRange)
         {
-            if(currentFrame.mnId - Frame(*vit).mnId > 70 )
+            if(currentFrame.mnId - Frame(*vit).mnId > 100 )
             {
                 candidates.push_back(*vit);
                 cout << Frame(*vit).mnId << " ";
@@ -345,9 +361,10 @@ int findFeatureMatches(Frame &lastFrame,
 }
 
 /*we need a simple function to estimate the inliers and pose*/
-RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2, vector<DMatch> matches)
+RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2)
 {
     RESULT_OF_PNP result;
+    map<int,int> matches = frame2.matchesId;
     // 第一个帧的三维点
     vector<cv::Point3f> pts_obj;
     // 第二个帧的图像点
@@ -355,19 +372,21 @@ RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2, vector<DMatch> matche
 
     // 相机内参
     Camera* pCamera = new Camera();
-    for (size_t i=0; i<matches.size(); i++)
+
+    for(map<int,int>::const_iterator mit = matches.begin(); mit!=matches.end(); mit++)
     {
-        // query 是第一个, train 是第二个
-        cv::Point2f p = frame1.mvKeys[matches[i].queryIdx].pt;
-        pts_img.push_back( cv::Point2f( frame2.mvKeys[matches[i].trainIdx].pt ) );
+
+        cv::Point2f p = frame1.mvKeys[mit->second].pt;
+        pts_img.push_back( cv::Point2f( frame2.mvKeys[mit->first].pt ) );
 
         // 将(u,v,d)转成(x,y,z)
         cv::Point2f pt ( p.x, p.y );
-        float depth = frame1.mvDepth[matches[i].queryIdx];
+        float depth = frame1.mvDepth[mit->second];
 
         cv::Point3f pd = pCamera->pixel2camera(pt,depth);
         pts_obj.push_back( pd );
     }
+
 
     if (pts_obj.size() ==0 || pts_img.size()==0)
     {
@@ -388,7 +407,7 @@ RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2, vector<DMatch> matche
     cv::Mat cameraMatrix( 3, 3, CV_64F, camera_matrix_data );
     cv::Mat rvec, tvec, inliers;
     // 求解pnp
-    cv::solvePnPRansac( pts_obj, pts_img, cameraMatrix, cv::Mat(), rvec, tvec, false, 100, 1.0, 100, inliers );
+    cv::solvePnPRansac( pts_obj, pts_img, cameraMatrix, cv::Mat(), rvec, tvec, false, 200, 4.0, 0.99, inliers );
 
     result.rvec = rvec;
     result.tvec = tvec;
@@ -396,4 +415,10 @@ RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2, vector<DMatch> matche
 
     return result;
 }
+
+double normofTransform( cv::Mat rvec, cv::Mat tvec )
+{
+    return fabs(min(cv::norm(rvec), 2*M_PI-cv::norm(rvec)))+ fabs(cv::norm(tvec));
+}
+
 

@@ -86,6 +86,9 @@ public:
     // Backprojects a keypoint (if stereo/depth info available) into 3D world coordinates.
     cv::Mat UnprojectStereo(const int &i);
 
+    // new add
+    cv::Mat pixel2Camera(const int &i);
+
 
 public:
 

@@ -104,9 +104,18 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 add_executable(feature_match test/feature_match.cpp )
 target_link_libraries(feature_match ${PROJECT_NAME} g2o_core g2o_types_slam3d)
 
+add_executable(feature_match2 test/feature_match2.cpp )
+target_link_libraries(feature_match2 ${PROJECT_NAME} g2o_core g2o_types_slam3d)
+
 add_executable(pose_graph_try2 test/pose_graph_try2.cpp )
 target_link_libraries(pose_graph_try2 ${PROJECT_NAME} g2o_core g2o_types_slam3d g2o_solver_csparse g2o_stuff g2o_csparse_extension ${CSPARSE_LIBRARY})
 
 add_executable(pose_graph_try3 test/pose_graph_try3.cpp )
 target_link_libraries(pose_graph_try3 ${PROJECT_NAME} g2o_core g2o_types_slam3d g2o_solver_csparse g2o_stuff g2o_csparse_extension ${CSPARSE_LIBRARY})
+
+add_executable(match_test test/match_test.cpp )
+target_link_libraries(match_test ${PROJECT_NAME})
+
+add_executable(match_test2 test/match_test2.cpp )
+target_link_libraries(match_test2 ${PROJECT_NAME})
 

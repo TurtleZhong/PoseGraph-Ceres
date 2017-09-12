@@ -110,6 +110,9 @@ bool SequenceRun::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRe
 
     /*after set the frame pose we can generate the mappoints*/
 
+    /*new add we modified it in 2017.09.12*/
+    /*notice: the mappoint is in the current camera coordination*/
+
     GenerateFrameMappoints();
 
     return true;
@@ -141,8 +144,8 @@ bool SequenceRun::GenerateFrameMappoints()
 
     float middleDistance = vDepthIdx[vDepthIdx.size()/2 +1].first;
     float minDistance,maxDistance;
-    minDistance = middleDistance * 0.4;
-    maxDistance = middleDistance * 1.3;
+    minDistance = middleDistance * 0.3;
+    maxDistance = middleDistance * 1.4;
     // We insert points (minDistance < depth < MaxDistance)
 
     int nPoints = 0;
@@ -154,7 +157,8 @@ bool SequenceRun::GenerateFrameMappoints()
         if(depth > minDistance && depth < maxDistance)
         {
             /*generate the mappoints*/
-            cv::Mat x3D = mCurrentFrame.UnprojectStereo(i);
+            /*modified !! notice*/
+            cv::Mat x3D = mCurrentFrame.pixel2Camera(i);
             MapPoint* pMap = new MapPoint(x3D, &mCurrentFrame, i);
 
             mCurrentFrame.mvpMapPoints[i] = pMap;
@@ -164,6 +168,7 @@ bool SequenceRun::GenerateFrameMappoints()
         }
 
     }
+    cout << "In frame " << mCurrentFrame.mnId << " We got " << nPoints << " Mappoints with depth!" << endl;
 //    cout << "minDistance = " << minDistance << endl;
 //    cout << "maxDistance = " << maxDistance << endl;
 //    cout << "generate mappoints: " << nPoints << endl;

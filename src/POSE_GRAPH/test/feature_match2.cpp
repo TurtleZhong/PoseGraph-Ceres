@@ -13,60 +13,69 @@ using namespace std;
 using namespace POSE_GRAPH;
 
 int find_feature_matches(Frame &currentFrame,
-                          Frame &lastFrame,
-                          vector<DMatch>& matches,
-                          string method = "BF");
+                         Frame &lastFrame,
+                         vector<DMatch>& matches,
+                         string method = "BF");
 
 int main(int argc, char *argv[])
 {
 
-    Config::setParameterFile("/home/m/ws_orb2/src/POSE_GRAPH/config/config.yaml");
+    Config::setParameterFile("/home/m/ws_orb2/src/POSE_GRAPH/config/config05.yaml");
     string dir = Config::get<string>("sequence_dir");
 
     SequenceRun* sequenceRun = new SequenceRun();
     Frame currentFrame, lastFrame;
 
-    for(int32_t i = 0; i < 4541; i++)
-    {
-        char base_name[256];
-        sprintf(base_name,"%06d.png",i);
-        string left_img_file_name = dir + "/image_0/" + base_name;
-        string right_img_file_name = dir + "/image_1/" + base_name;
-        Mat Left = cv::imread(left_img_file_name,CV_LOAD_IMAGE_GRAYSCALE);
-        Mat Right = cv::imread(right_img_file_name,CV_LOAD_IMAGE_GRAYSCALE);
-        cout << "Process :" << i << endl;
 
-        sequenceRun->GrabImageStereo(Left,Right,0.0);
-        currentFrame = sequenceRun->mCurrentFrame;
-        cout << "keypoints.size = " << currentFrame.mvKeysUn.size() << endl;
+    char base_name[256];
+    sprintf(base_name,"%06d.png",2511);
+    string left_img_file_name = dir + "/image_0/" + base_name;
+    string right_img_file_name = dir + "/image_1/" + base_name;
+    Mat Left = cv::imread(left_img_file_name,CV_LOAD_IMAGE_GRAYSCALE);
+    Mat Right = cv::imread(right_img_file_name,CV_LOAD_IMAGE_GRAYSCALE);
 
-        cout << currentFrame.mDescriptors.type() << endl;
-
+    char base_name1[256];
+    sprintf(base_name1,"%06d.png",125);
+    string left_img_file_name1 = dir + "/image_0/" + base_name1;
+    string right_img_file_name1 = dir + "/image_1/" + base_name1;
+    Mat Left1 = cv::imread(left_img_file_name1,CV_LOAD_IMAGE_GRAYSCALE);
+    Mat Right1 = cv::imread(right_img_file_name1,CV_LOAD_IMAGE_GRAYSCALE);
 
 
-        vector<DMatch> matches;
-        if(i>2)
-        {
-//            ORBmatcher matcher(0.7,false);
-//            int nmatches = matcher.MatcheTwoFrames(currentFrame,lastFrame,4,false);
-//            cout << "nmatches = " << nmatches << endl;
-            find_feature_matches(currentFrame,lastFrame,matches,"BF");
-        }
+    sequenceRun->GrabImageStereo(Left,Right,0.0);
+    currentFrame = sequenceRun->mCurrentFrame;
 
-
-
-        cv::imshow("currentFrame", sequenceRun->mImGray);
-
-
-        cv::waitKey(27);
-
-        lastFrame = currentFrame;
+    sequenceRun->GrabImageStereo(Left1,Right1,0.0);
+    lastFrame = sequenceRun->mCurrentFrame;
 
 
 
 
 
-    }
+
+    vector<DMatch> matches;
+
+
+    //            ORBmatcher matcher(0.7,false);
+    //            int nmatches = matcher.MatcheTwoFrames(currentFrame,lastFrame,4,false);
+    //            cout << "nmatches = " << nmatches << endl;
+    find_feature_matches(currentFrame,lastFrame,matches,"BF");
+
+
+
+
+    cv::imshow("currentFrame", currentFrame.mImageGray);
+
+
+    cv::waitKey(0);
+
+
+
+
+
+
+
+
 
 
     return 0;
@@ -75,9 +84,9 @@ int main(int argc, char *argv[])
 
 
 int find_feature_matches(Frame &currentFrame,
-                          Frame &lastFrame,
-                          vector<DMatch>& matches,
-                          string method)
+                         Frame &lastFrame,
+                         vector<DMatch>& matches,
+                         string method)
 {
     /*
       * define the detect param: use ORB
@@ -116,7 +125,7 @@ int find_feature_matches(Frame &currentFrame,
         //vector<DMatch> goodMatches;
         for (int i = 0; i < matchDistance.rows; i++)
         {
-            if(matchDistance.at<float>(i,0) < 0.7 * matchDistance.at<float>(i, 1))
+            if(matchDistance.at<float>(i,0) < 0.6 * matchDistance.at<float>(i, 1))
             {
                 DMatch dmatchs(i, matchIndex.at<int>(i,0), matchDistance.at<float>(i,1));
                 matches.push_back(dmatchs);
@@ -141,7 +150,7 @@ int find_feature_matches(Frame &currentFrame,
 
         for(int i =0; i < descriptors.rows; i++)
         {
-            if(tmpMatches[i].distance <= max(2*min_dist, 30.0))
+            if(tmpMatches[i].distance <= max(2*min_dist, 35.0))
             {
                 matches.push_back(tmpMatches[i]);
             }
