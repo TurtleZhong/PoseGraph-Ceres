@@ -197,18 +197,6 @@ void checkFrame(Frame &frame1, Frame &frame2, g2o::SparseOptimizer &optimizer)
     else if(nmatches > 180)
     {
 
-//        cv::Mat T = frame1.mTwc;
-//        cv::Mat T1 = frame2.mTcw;
-
-//        cv::Mat deltaT = T1 * T;
-//        cv::Mat t = deltaT.rowRange(0,3).col(3);
-
-//        double x = (double)t.at<float>(0);
-//        double y = (double)t.at<float>(1);
-//        double z = (double)t.at<float>(2);
-
-//        double dist = sqrt(x*x + y*y +z*z);
-
         /*now we check the motion and inliers of this two frame*/
         RESULT_OF_PNP result = motionEstimate(frame1,frame2);
         double norm = normofTransform(result.rvec,result.tvec);
@@ -225,7 +213,6 @@ void checkFrame(Frame &frame1, Frame &frame2, g2o::SparseOptimizer &optimizer)
 
             // imformation Matrix
             Eigen::Matrix<double, 6, 6> information = Eigen::Matrix< double, 6,6 >::Identity();
-
             edge->setInformation( information );
             Eigen::Isometry3d T = Converter::toIsometry3d(frame2.mTcw * frame1.mTwc);
             edge->setMeasurement( T );
@@ -243,10 +230,13 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
 {
     /*here we need to get the candidate frames according to the Twc*/
     std::vector<Frame> candidates;
-    cout << BOLDGREEN"candidate frames id = ";
+    //cout << BOLDGREEN"candidate frames id = ";
 
     for(vector<Frame>::const_iterator vit = vFrames.begin(); vit!=vFrames.end();vit++)
     {
+        if(currentFrame.mnId - Frame(*vit).mnId < 100)
+            continue;
+
         cv::Mat twc = Frame(*vit).GetCameraCenter();
 
         if(currentFrame.mnId - Frame(*vit).mnId < 5) /*near by frames --> can write to the config files*/
@@ -256,7 +246,7 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
         bool isInRange = currentFrame.isInSearchRange(twc);
         if(isInRange)
         {
-            if(currentFrame.mnId - Frame(*vit).mnId > 100 )
+            if(currentFrame.mnId - Frame(*vit).mnId >= 100 )
             {
                 candidates.push_back(*vit);
                 cout << Frame(*vit).mnId << " ";
@@ -365,12 +355,12 @@ RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2)
 {
     RESULT_OF_PNP result;
     map<int,int> matches = frame2.matchesId;
-    // 第一个帧的三维点
+    // 3d points in first frame
     vector<cv::Point3f> pts_obj;
-    // 第二个帧的图像点
+    // pixel in second frame
     vector< cv::Point2f > pts_img;
 
-    // 相机内参
+    // Camera internal params
     Camera* pCamera = new Camera();
 
     for(map<int,int>::const_iterator mit = matches.begin(); mit!=matches.end(); mit++)
@@ -379,7 +369,7 @@ RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2)
         cv::Point2f p = frame1.mvKeys[mit->second].pt;
         pts_img.push_back( cv::Point2f( frame2.mvKeys[mit->first].pt ) );
 
-        // 将(u,v,d)转成(x,y,z)
+        // Transform (u,v,d) to (x,y,z)
         cv::Point2f pt ( p.x, p.y );
         float depth = frame1.mvDepth[mit->second];
 
@@ -403,10 +393,10 @@ RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2)
         {0, 0, 1}
     };
 
-    // 构建相机矩阵
+    // construct the camera Matrix
     cv::Mat cameraMatrix( 3, 3, CV_64F, camera_matrix_data );
     cv::Mat rvec, tvec, inliers;
-    // 求解pnp
+    // Solve pnp
     cv::solvePnPRansac( pts_obj, pts_img, cameraMatrix, cv::Mat(), rvec, tvec, false, 200, 4.0, 0.99, inliers );
 
     result.rvec = rvec;
