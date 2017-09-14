@@ -320,6 +320,13 @@ cv::Mat FrameDrawer::DrawFrameMatch()
 
 vector<Mat> FrameDrawer::DrawReprojectionError()
 {
+
+    /*new add write the 3D - 2D pairs*/
+    ofstream outFile;
+
+
+
+
     /*for matches*/
     cv::Mat imMatch = Mat::zeros(mIm.rows*2,mIm.cols,CV_8UC3);
 
@@ -330,6 +337,17 @@ vector<Mat> FrameDrawer::DrawReprojectionError()
     vector<float> vDepth = mLastFrame.mvDepth; /*depth of last frame*/
     int lastFrameId = mLastFrame.mnId;
     int currFrameId = mCurrentFrame.mnId;
+
+    stringstream ss3;
+    ss3 << currFrameId;
+    string tmp3;
+    ss3 >> tmp3;
+    string pairsName = "/home/m/ws_orb2/src/ORB_SLAM2/3d-2dpairs/" + tmp3+ ".txt";
+    outFile.open(pairsName);
+
+
+
+
 
     cv::Mat Tlw = mLastFrame.mTcw;
     cv::Mat Tcw = mCurrentFrame.mTcw;
@@ -404,6 +422,7 @@ vector<Mat> FrameDrawer::DrawReprojectionError()
         //float depth = 1.0;
 
         cv::Mat x3Dl = pixel2Camera(u, v, depth);
+
         /*ground truth*/
         cv::Mat x3Dl_gd = pixel2Camera(u,v,depth);
 
@@ -415,6 +434,9 @@ vector<Mat> FrameDrawer::DrawReprojectionError()
         /*before we show it we need to check weather the x3Dl is empty*/
         if(!x3Dl.empty() && !x3Dl_gd.empty())
         {
+            outFile << x3Dl.at<float>(0) << " " << x3Dl.at<float>(1) << " " << x3Dl.at<float>(2) << " ";
+            outFile << vCurrentKeys[curr_id].pt.x << " " << vCurrentKeys[curr_id].pt.y << endl;
+
             cv::Mat x3Dc = Rcl * x3Dl + tcl;
             cv::Mat x3Dc_gd = Rcl_gd * x3Dl_gd + tcl_gd;
 
@@ -515,6 +537,14 @@ vector<Mat> FrameDrawer::DrawReprojectionError()
     vector<Mat> output;
     output.push_back(imReprojection);
     output.push_back(imMatch);
+
+
+
+
+
+
+
+
 
     return output;
 
