@@ -35,7 +35,7 @@
 #include <Eigen/Geometry>
 #include "ceres/autodiff_cost_function.h"
 
-//#include "types.h"
+#include "types.h"
 
 
 // Computes the error term for two poses that have a relative pose measurement
@@ -70,15 +70,6 @@
 
 namespace POSE_GRAPH
 {
-
-
-struct Pose3d {
-    Eigen::Vector3d p;
-    Eigen::Quaterniond q;
-
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-};
-
 
 
 class PoseGraph3dErrorTerm {
@@ -132,8 +123,8 @@ public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     private:
-        // The measurement for the position of B relative to A in the A frame.
-        const Pose3d t_ab_measured_;
+    // The measurement for the position of B relative to A in the A frame.
+    const Pose3d t_ab_measured_;
     // The square root of the measurement information matrix.
     const Eigen::Matrix<double, 6, 6> sqrt_information_;
 };

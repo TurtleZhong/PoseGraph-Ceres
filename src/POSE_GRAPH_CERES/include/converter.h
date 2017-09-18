@@ -28,7 +28,7 @@
 #include<g2o/types/sim3/types_seven_dof_expmap.h>
 #include<sophus/so3.h>
 #include<sophus/se3.h>
-#include"PoseGraph3dError.h" /*to use the Pos3d*/
+#include"types.h" /*to use the Pos3d*/
 
 namespace POSE_GRAPH
 {

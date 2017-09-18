@@ -122,3 +122,8 @@ target_link_libraries(match_test ${PROJECT_NAME})
 add_executable(match_test2 test/match_test2.cpp )
 target_link_libraries(match_test2 ${PROJECT_NAME})
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+
+add_executable(pose_graph_ceres test/pose_graph_ceres.cpp )
+target_link_libraries(pose_graph_ceres ${PROJECT_NAME} g2o_core g2o_types_slam3d)
+
