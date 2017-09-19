@@ -47,7 +47,8 @@ Frame::Frame(const Frame &frame)
      mnScaleLevels(frame.mnScaleLevels),
      mfScaleFactor(frame.mfScaleFactor), mfLogScaleFactor(frame.mfLogScaleFactor),
      mvScaleFactors(frame.mvScaleFactors), mvInvScaleFactors(frame.mvInvScaleFactors),
-     mvLevelSigma2(frame.mvLevelSigma2), mvInvLevelSigma2(frame.mvInvLevelSigma2),mImageGray(frame.mImageGray)
+     mvLevelSigma2(frame.mvLevelSigma2), mvInvLevelSigma2(frame.mvInvLevelSigma2),mImageGray(frame.mImageGray),
+     matchesId(frame.matchesId),mHaveLoopEdge(frame.mHaveLoopEdge)
 {
     for(int i=0;i<FRAME_GRID_COLS;i++)
         for(int j=0; j<FRAME_GRID_ROWS; j++)
@@ -118,6 +119,8 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     mb = mbf/fx;
 
     AssignFeaturesToGrid();
+    /*LoopEdge*/
+    mHaveLoopEdge = false;
 }
 
 

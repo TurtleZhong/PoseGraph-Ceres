@@ -10,14 +10,13 @@ int main(int argc, char *argv[])
 
     GroundTruth gd;
     cout << "gd.getFrameTwc(0) = \n" << gd.getFrameTwc(0) << endl;
-    cv::Mat T = gd.getFrameTcw(2589);
-    cv::Mat T1 = gd.getFrameTwc(828);
+    cv::Mat T = gd.getFrameTcw(32);
+    cv::Mat T1 = gd.getFrameTwc(31);
     cv::Mat result = T * T1;
     cout << "T = \n" << T <<  T.type() << endl;
     cout << "T* T' =\n " << T * T.inv() << endl;
     cout << "T1 = \n" << T1.inv() << endl;
     cout << "T1 = \n" << gd.getFrameTcw(828) << endl;
-    cout << "result = " << result << endl;
-
+    cout << "result = \n" << result << endl;
     return 0;
 }

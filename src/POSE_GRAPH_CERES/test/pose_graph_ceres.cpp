@@ -38,12 +38,14 @@ void BuildOptimizationProblem(const VectorOfEdges& Edges,
 bool SolveOptimizationProblem(ceres::Problem* problem);
 bool OutputPoses(const std::string& filename, const MapOfPoses& poses);
 
+ofstream outFileLoop;
+
 
 int main(int argc, char *argv[])
 {
 
 
-    Config::setParameterFile("/home/m/ORB_SLAM2_Debug_and_Test/src/POSE_GRAPH_CERES/config/config08.yaml");
+    Config::setParameterFile("/home/m/ws_orb2/src/POSE_GRAPH_CERES/config/config.yaml");
     string dir = Config::get<string>("sequence_dir");
     /*get the sequence length*/
     int sequenceLength = Config::get<int>("sequence_length");
@@ -59,6 +61,7 @@ int main(int argc, char *argv[])
 
     ofstream outFile;
     outFile.open("../camera_poses.txt");
+    outFileLoop.open("../loop_frame_id.txt");
 
     for(int32_t i = 0; i < sequenceLength; i++)
     {
@@ -99,9 +102,6 @@ int main(int argc, char *argv[])
         {
             vector<Frame> vCandidateFrames = getCandidateFrames(vFrames,currentFrame);
 
-            cout << "candiate = " << vCandidateFrames.size() << endl;
-            cout << "current frame id = " << currentFrame.mnId << endl;
-
             checkForPoseGraph(vCandidateFrames, currentFrame, Edges);
         }
 
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
 
     }
 
-    OutputPoses("/home/m/ORB_SLAM2_Debug_and_Test/src/POSE_GRAPH_CERES/pose_graph_before.txt",poses);
+    OutputPoses("/home/m/ws_orb2/src/POSE_GRAPH_CERES/pose_graph_before.txt",poses);
     /*after the data were generated, we created the pose_graph */
     BuildOptimizationProblem(Edges,&poses,&problem);
     bool isSuscess = SolveOptimizationProblem(&problem);
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
         cout << "May be some problems!" << endl;
 
     // Output the poses to the file with format: id x y z q_x q_y q_z q_w.
-    OutputPoses("/home/m/ORB_SLAM2_Debug_and_Test/src/POSE_GRAPH_CERES/pose_graph.txt",poses);
+    OutputPoses("/home/m/ws_orb2/src/POSE_GRAPH_CERES/pose_graph.txt",poses);
 
 
     return 0;
@@ -149,7 +149,6 @@ int main(int argc, char *argv[])
 
 void checkForPoseGraph(vector<Frame> &vFrames, Frame &currentFrame, VectorOfEdges &Edges)
 {
-    cout << "frame.size = " << vFrames.size() << endl;
     for(size_t i = 0; i < vFrames.size(); i++)
     {
         checkFrame(vFrames[i], currentFrame, Edges);
@@ -167,8 +166,8 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
     int nmatches = matcher.MatcheTwoFrames(frame2,frame1,5,false);
     //vector<DMatch> matches;
     //int nmatches = findFeatureMatches(frame1,frame2,matches);
-    cout << "matches = " << nmatches << " ";
-    cout << "ID = " << frame2.mnId << " " << frame1.mnId << endl;
+//    cout << "matches = " << nmatches << " ";
+//    cout << "ID = " << frame2.mnId << " " << frame1.mnId << endl;
 
     if(frame2.mnId - frame1.mnId == 1)
     {
@@ -211,12 +210,14 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
             Edges.push_back(edge);
 
             cout << BOLDYELLOW"add a new edge! " << frame2.mnId << " --> " << frame1.mnId <<  endl;
+            if(frame2.mnId - frame1.mnId > 100)
+                outFileLoop << frame2.mnId << " " << frame1.mnId << endl;
         }
 
     }
-    cout << endl;
 
 }
+
 
 std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFrame)
 {
@@ -447,7 +448,7 @@ bool SolveOptimizationProblem(ceres::Problem* problem)
 {
 
   ceres::Solver::Options options;
-  options.max_num_iterations = 200;
+  options.max_num_iterations = 1000;
   options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
 
   ceres::Solver::Summary summary;

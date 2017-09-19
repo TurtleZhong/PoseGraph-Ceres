@@ -182,6 +182,9 @@ public:
     /*add by zhong*/
     map<int,int> matchesId; //matches lastframe features[id], currentframe features[id]
 
+    /*loop vertex constrain*/
+    bool mHaveLoopEdge;
+
 private:
 
     // Undistort keypoints given OpenCV distortion parameters.

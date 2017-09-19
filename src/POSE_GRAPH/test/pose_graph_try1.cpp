@@ -20,7 +20,6 @@
 #include <g2o/core/optimization_algorithm_levenberg.h>
 #include <g2o/core/estimate_propagator.h>
 
-
 #include <fstream>
 
 using namespace std;
@@ -41,12 +40,14 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
 int findFeatureMatches(Frame &lastFrame, Frame &currentFrame, vector<DMatch> &matches, string method = "BF");
 RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2);
 
+ofstream outFileLoop;
+
 int main(int argc, char *argv[])
 {
 
 
 
-    Config::setParameterFile("/home/m/ws_orb2/src/POSE_GRAPH/config/config08.yaml");
+    Config::setParameterFile("/home/m/ws_orb2/src/POSE_GRAPH/config/config.yaml");
     string dir = Config::get<string>("sequence_dir");
     /*get the sequence length*/
     int sequenceLength = Config::get<int>("sequence_length");
@@ -70,6 +71,7 @@ int main(int argc, char *argv[])
 
     ofstream outFile;
     outFile.open("../camera_poses.txt");
+    outFileLoop.open("../loop_frame_id.txt");
 
     for(int32_t i = 0; i < sequenceLength; i++)
     {
@@ -194,31 +196,41 @@ void checkFrame(Frame &frame1, Frame &frame2, g2o::SparseOptimizer &optimizer)
         optimizer.addEdge(edge);
     }
 
-    else if(nmatches > 180)
+    else if(nmatches > 190)
     {
 
         /*now we check the motion and inliers of this two frame*/
         RESULT_OF_PNP result = motionEstimate(frame1,frame2);
         double norm = normofTransform(result.rvec,result.tvec);
 
-        if(result.inliers > 80 && norm < 1.2)
+        if(result.inliers > 85 && norm < 0.75)
         {
-            // EDGE
-            g2o::EdgeSE3* edge = new g2o::EdgeSE3();
 
 
-            edge->setVertex( 0, optimizer.vertex(frame1.mnId ));
-            edge->setVertex( 1, optimizer.vertex(frame2.mnId ));
-            edge->setRobustKernel( new g2o::RobustKernelHuber() );
+            if(!frame2.mHaveLoopEdge)
+            {
+                // EDGE
+                g2o::EdgeSE3* edge = new g2o::EdgeSE3();
 
-            // imformation Matrix
-            Eigen::Matrix<double, 6, 6> information = Eigen::Matrix< double, 6,6 >::Identity();
-            edge->setInformation( information );
-            Eigen::Isometry3d T = Converter::toIsometry3d(frame2.mTcw * frame1.mTwc);
-            edge->setMeasurement( T );
-            optimizer.addEdge(edge);
 
-            cout << BOLDYELLOW"add a new edge! " << frame2.mnId << " --> " << frame1.mnId <<  endl;
+                edge->setVertex( 0, optimizer.vertex(frame1.mnId ));
+                edge->setVertex( 1, optimizer.vertex(frame2.mnId ));
+                edge->setRobustKernel( new g2o::RobustKernelHuber() );
+
+                // imformation Matrix
+                Eigen::Matrix<double, 6, 6> information = Eigen::Matrix< double, 6,6 >::Identity();
+                edge->setInformation( information );
+                Eigen::Isometry3d T = Converter::toIsometry3d(frame2.mTcw * frame1.mTwc);
+                edge->setMeasurement( T );
+                optimizer.addEdge(edge);
+
+                cout << BOLDYELLOW"add a new edge! " << frame2.mnId << " --> " << frame1.mnId <<  endl;
+                if(frame2.mnId - frame1.mnId > 100)
+                    outFileLoop << frame2.mnId << " " << frame1.mnId << endl;
+
+                frame2.mHaveLoopEdge = true;
+            }
+
         }
 
     }
@@ -234,12 +246,12 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
 
     for(vector<Frame>::const_iterator vit = vFrames.begin(); vit!=vFrames.end();vit++)
     {
-        if(currentFrame.mnId - Frame(*vit).mnId < 100)
+        if(currentFrame.mnId - Frame(*vit).mnId > 1 && currentFrame.mnId - Frame(*vit).mnId < 100)
             continue;
 
         cv::Mat twc = Frame(*vit).GetCameraCenter();
 
-        if(currentFrame.mnId - Frame(*vit).mnId < 5) /*near by frames --> can write to the config files*/
+        if(currentFrame.mnId - Frame(*vit).mnId == 1) /*near by frames --> can write to the config files*/
         {
             candidates.push_back(*vit);
         }
