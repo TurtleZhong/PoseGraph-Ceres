@@ -233,7 +233,7 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
 
     for(vector<Frame>::const_iterator vit = vFrames.begin(); vit!=vFrames.end();vit++)
     {
-        if(currentFrame.mnId - Frame(*vit).mnId < 100)
+        if(currentFrame.mnId - Frame(*vit).mnId > 5 && currentFrame.mnId - Frame(*vit).mnId < 100)
             continue;
 
         cv::Mat twc = Frame(*vit).GetCameraCenter();

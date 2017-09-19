@@ -1,9 +1,11 @@
 %YAML:1.0
 # data
-poses_dir: /home/m/KITTI/poses/08.txt
-sequence_dir: /home/m/KITTI/dataset/sequences/08
+#poses_dir: /home/m/KITTI/poses/08.txt
+#sequence_dir: /home/m/KITTI/dataset/sequences/08
+sequence_dir: /home/m/work/slam/data/KITTI/08
+poses_dir: /home/m/work/slam/data/KITTI/dataset/poses/08.txt
 sequence_length: 4071
-
+#sequence_length: 200
 #--------------------------------------------------------------------------------------------
 # Camera Parameters. Adjust them!
 #--------------------------------------------------------------------------------------------

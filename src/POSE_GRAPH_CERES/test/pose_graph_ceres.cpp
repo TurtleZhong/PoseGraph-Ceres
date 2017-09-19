@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 {
 
 
-    Config::setParameterFile("/home/m/ws_orb2/src/POSE_GRAPH_CERES/config/config08.yaml");
+    Config::setParameterFile("/home/m/ORB_SLAM2_Debug_and_Test/src/POSE_GRAPH_CERES/config/config08.yaml");
     string dir = Config::get<string>("sequence_dir");
     /*get the sequence length*/
     int sequenceLength = Config::get<int>("sequence_length");
@@ -79,18 +79,18 @@ int main(int argc, char *argv[])
         poses[currentFrame.mnId] = currentPose;
 
         /*the first edge*/
-        if(i == 0)
-        {
-            Edge3d edge;
-            edge.id_begin = 0;
-            edge.id_end = 0;
-            cv::Mat Tcl = cv::Mat::eye(4,4,CV_32F);
-            Pose3d T = Converter::toPose3d(Tcl);
-            edge.t_be = T;
-            Eigen::Matrix<double, 6, 6> information = Eigen::Matrix< double, 6,6 >::Identity();
-            edge.information = information;
-            Edges.push_back(edge);
-        }
+//        if(i == 0)
+//        {
+//            Edge3d edge;
+//            edge.id_begin = 0;
+//            edge.id_end = 0;
+//            cv::Mat Tcl = cv::Mat::eye(4,4,CV_32F);
+//            Pose3d T = Converter::toPose3d(Tcl);
+//            edge.t_be = T;
+//            Eigen::Matrix<double, 6, 6> information = Eigen::Matrix< double, 6,6 >::Identity();
+//            edge.information = information;
+//            Edges.push_back(edge);
+//        }
 
 
 
@@ -98,6 +98,9 @@ int main(int argc, char *argv[])
         if(i > 0)
         {
             vector<Frame> vCandidateFrames = getCandidateFrames(vFrames,currentFrame);
+
+            cout << "candiate = " << vCandidateFrames.size() << endl;
+            cout << "current frame id = " << currentFrame.mnId << endl;
 
             checkForPoseGraph(vCandidateFrames, currentFrame, Edges);
         }
@@ -108,6 +111,7 @@ int main(int argc, char *argv[])
         //cv::waitKey(27);
 
         vFrames.push_back(currentFrame);
+
         Mat pose = currentFrame.mTwc;
 
         //cout << "currentframe.mTwc = " << pose << endl;
@@ -127,23 +131,25 @@ int main(int argc, char *argv[])
 
     }
 
+    OutputPoses("/home/m/ORB_SLAM2_Debug_and_Test/src/POSE_GRAPH_CERES/pose_graph_before.txt",poses);
     /*after the data were generated, we created the pose_graph */
-    BuildOptimizationProblem(Edges,poses,problem);
-    bool isSuscess = SolveOptimizationProblem(problem);
+    BuildOptimizationProblem(Edges,&poses,&problem);
+    bool isSuscess = SolveOptimizationProblem(&problem);
     if(isSuscess)
         cout << "Optimizing Suscessfully!" << endl;
     else
         cout << "May be some problems!" << endl;
 
     // Output the poses to the file with format: id x y z q_x q_y q_z q_w.
-    OutputPoses("/home/m/ws_orb2/src/POSE_GRAPH_CERES/pose_graph.txt",poses);
+    OutputPoses("/home/m/ORB_SLAM2_Debug_and_Test/src/POSE_GRAPH_CERES/pose_graph.txt",poses);
 
 
     return 0;
 }
 
-void checkForPoseGraph(vector<Frame> &vFrames, Frame &currentFrame, Edge3d &Edges)
+void checkForPoseGraph(vector<Frame> &vFrames, Frame &currentFrame, VectorOfEdges &Edges)
 {
+    cout << "frame.size = " << vFrames.size() << endl;
     for(size_t i = 0; i < vFrames.size(); i++)
     {
         checkFrame(vFrames[i], currentFrame, Edges);
@@ -162,6 +168,7 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
     //vector<DMatch> matches;
     //int nmatches = findFeatureMatches(frame1,frame2,matches);
     cout << "matches = " << nmatches << " ";
+    cout << "ID = " << frame2.mnId << " " << frame1.mnId << endl;
 
     if(frame2.mnId - frame1.mnId == 1)
     {
@@ -178,6 +185,7 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
         edge.information = information;
 
         Edges.push_back(edge);
+        cout << BOLDCYAN"Add a neaby edge!" << endl;
 
 
     }
@@ -218,7 +226,7 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
 
     for(vector<Frame>::const_iterator vit = vFrames.begin(); vit!=vFrames.end();vit++)
     {
-        if(currentFrame.mnId - Frame(*vit).mnId < 100)
+        if(currentFrame.mnId - Frame(*vit).mnId > 5 && currentFrame.mnId - Frame(*vit).mnId < 100)
             continue;
 
         cv::Mat twc = Frame(*vit).GetCameraCenter();
@@ -409,6 +417,8 @@ void BuildOptimizationProblem(const VectorOfEdges& Edges,
 
         MapOfPoses::iterator pose_begin_iter = poses->find(edge.id_begin);
         MapOfPoses::iterator pose_end_iter = poses->find(edge.id_end);
+
+
 
         const Eigen::Matrix<double, 6, 6> sqrt_information = edge.information.llt().matrixL();
         // Ceres will take ownership of the pointer.

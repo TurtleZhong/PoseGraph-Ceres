@@ -245,8 +245,8 @@ Pose3d Converter::toPose3d(const cv::Mat &Twc)
     cv::Mat Rwc = Twc.rowRange(0,3).colRange(0,3);
     cv::Mat twc = Twc.rowRange(0,3).col(3);
 
-    Eigen::Vector3d p = toVector3d(Rwc);
-    Eigen::Quaterniond q = toQuaternion(twc);
+    Eigen::Vector3d p = toVector3d(twc);
+    Eigen::Quaterniond q = toQuaternion(Rwc);
 
     pose.p = p;
     pose.q = q;
