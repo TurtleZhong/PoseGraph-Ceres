@@ -6,18 +6,24 @@
 #include "converter.h"
 #include "SequenceRun.h"
 #include "ORBmatcher.h"
-#include "PoseGraph3dError.h"
-#include "types.h"
 
-/*ceres parts*/
-#include <ceres/ceres.h>
+/*g2o parts*/
+#include <g2o/types/slam3d/types_slam3d.h>
+#include <g2o/core/sparse_optimizer.h>
+#include <g2o/core/block_solver.h>
+#include <g2o/core/factory.h>
+#include <g2o/core/optimization_algorithm_factory.h>
+#include <g2o/core/optimization_algorithm_gauss_newton.h>
+#include <g2o/solvers/eigen/linear_solver_eigen.h>
+#include <g2o/core/robust_kernel.h>
+#include <g2o/core/robust_kernel_impl.h>
+#include <g2o/core/optimization_algorithm_levenberg.h>
+#include <g2o/core/estimate_propagator.h>
 
 #include <fstream>
 
 using namespace std;
-using namespace ceres;
 using namespace POSE_GRAPH;
-
 
 struct RESULT_OF_PNP
 {
@@ -28,33 +34,37 @@ struct RESULT_OF_PNP
 double normofTransform( cv::Mat rvec, cv::Mat tvec );
 
 
-void checkForPoseGraph(vector<Frame>& vFrames, Frame &currentFrame, VectorOfEdges &Edges);
-void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges);
+void checkForPoseGraph(vector<Frame>& vFrames, Frame &currentFrame, g2o::SparseOptimizer &optimizer);
+void checkFrame(Frame &frame1, Frame &frame2, g2o::SparseOptimizer &optimizer);
 std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFrame);
 int findFeatureMatches(Frame &lastFrame, Frame &currentFrame, vector<DMatch> &matches, string method = "BF");
 RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2);
-void BuildOptimizationProblem(const VectorOfEdges& Edges,
-                              MapOfPoses* poses, ceres::Problem* problem);
-bool SolveOptimizationProblem(ceres::Problem* problem);
-bool OutputPoses(const std::string& filename, const MapOfPoses& poses);
 
 ofstream outFileLoop;
-
 
 int main(int argc, char *argv[])
 {
 
 
-    Config::setParameterFile("/home/m/ws_orb2/src/POSE_GRAPH_CERES/config/config.yaml");
+
+    Config::setParameterFile("/home/m/ws_orb2/src/POSE_GRAPH/config/config.yaml");
     string dir = Config::get<string>("sequence_dir");
     /*get the sequence length*/
     int sequenceLength = Config::get<int>("sequence_length");
 
-    /*new add 2017.09.16 --> ceres*/
-    Problem problem;
-    MapOfPoses poses;
-    VectorOfEdges Edges;
+    /*g2o parts*/
 
+    g2o::SparseOptimizer optimizer;
+    g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType> * linearSolver;
+
+    linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>();
+    linearSolver->setBlockOrdering(false);
+
+    g2o::BlockSolver_6_3 * solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
+
+    g2o::OptimizationAlgorithmLevenberg* solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+    optimizer.setAlgorithm(solver);
+    optimizer.setVerbose(true);
 
     SequenceRun* sequenceRun = new SequenceRun();
     vector<Frame> vFrames;
@@ -77,24 +87,14 @@ int main(int argc, char *argv[])
         Frame currentFrame = sequenceRun->mCurrentFrame;
 
         /*add the frame vertex*/
-
-        Pose3d currentPose =Converter::toPose3d(currentFrame.mTwc);
-        poses[currentFrame.mnId] = currentPose;
-
-        /*the first edge*/
-//        if(i == 0)
-//        {
-//            Edge3d edge;
-//            edge.id_begin = 0;
-//            edge.id_end = 0;
-//            cv::Mat Tcl = cv::Mat::eye(4,4,CV_32F);
-//            Pose3d T = Converter::toPose3d(Tcl);
-//            edge.t_be = T;
-//            Eigen::Matrix<double, 6, 6> information = Eigen::Matrix< double, 6,6 >::Identity();
-//            edge.information = information;
-//            Edges.push_back(edge);
-//        }
-
+        g2o::VertexSE3 * vSE3 = new g2o::VertexSE3();
+        vSE3->setEstimate(Eigen::Isometry3d::Identity());
+        vSE3->setId(currentFrame.mnId);
+        optimizer.addVertex(vSE3);
+        if(currentFrame.mnId == 0)
+            vSE3->setFixed(true);
+        else
+            vSE3->setFixed(false);
 
 
         /*add vertex and edges to generate pose graph*/
@@ -102,8 +102,10 @@ int main(int argc, char *argv[])
         {
             vector<Frame> vCandidateFrames = getCandidateFrames(vFrames,currentFrame);
 
-            checkForPoseGraph(vCandidateFrames, currentFrame, Edges);
+            checkForPoseGraph(vCandidateFrames, currentFrame, optimizer);
         }
+
+
 
         //cv::imshow("currentFrame", sequenceRun->mImGray);
 
@@ -111,7 +113,6 @@ int main(int argc, char *argv[])
         //cv::waitKey(27);
 
         vFrames.push_back(currentFrame);
-
         Mat pose = currentFrame.mTwc;
 
         //cout << "currentframe.mTwc = " << pose << endl;
@@ -131,33 +132,40 @@ int main(int argc, char *argv[])
 
     }
 
-    OutputPoses("/home/m/ws_orb2/src/POSE_GRAPH_CERES/pose_graph_before.txt",poses);
-    /*after the data were generated, we created the pose_graph */
-    BuildOptimizationProblem(Edges,&poses,&problem);
-    bool isSuscess = SolveOptimizationProblem(&problem);
-    if(isSuscess)
-        cout << "Optimizing Suscessfully!" << endl;
-    else
-        cout << "May be some problems!" << endl;
+    cout<<RESET"optimizing pose graph, vertices: "<<optimizer.vertices().size()<<endl;
+    optimizer.save("../result/g2o/result_before.g2o");
 
-    // Output the poses to the file with format: id x y z q_x q_y q_z q_w.
-    OutputPoses("/home/m/ws_orb2/src/POSE_GRAPH_CERES/pose_graph.txt",poses);
+
+    optimizer.initializeOptimization();
+
+
+    g2o::EstimatePropagatorCost costFunction(&optimizer);
+    optimizer.computeInitialGuess(costFunction);
+
+
+    optimizer.optimize( 1000 );
+    optimizer.save( "../result/g2o/result_after.g2o" );
+    cout<<"Optimization done."<<endl;
+
+
+
+
 
 
     return 0;
 }
 
-void checkForPoseGraph(vector<Frame> &vFrames, Frame &currentFrame, VectorOfEdges &Edges)
+void checkForPoseGraph(vector<Frame> &vFrames, Frame &currentFrame, g2o::SparseOptimizer &optimizer)
 {
     for(size_t i = 0; i < vFrames.size(); i++)
     {
-        checkFrame(vFrames[i], currentFrame, Edges);
+        checkFrame(vFrames[i], currentFrame, optimizer);
     }
 
 
 }
 
-void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
+void checkFrame(Frame &frame1, Frame &frame2, g2o::SparseOptimizer &optimizer)
 {
     /*first we need to check this two frames --> use ORBmatcher*/
 
@@ -169,7 +177,7 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
         nmatches = matcher.MatcheTwoFrames(frame2,frame1,5,false);
         cout << "matches = " << nmatches << endl;
     }
-    else if (frame2.mnId > 3306 && frame2.mnId < 3701)
+    else if (frame2.mnId > 3306 && frame2.mnId < 3416)
     {
         ORBmatcher matcher(0.7,true);
 
@@ -184,24 +192,28 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
         cout << "matches = " << nmatches << endl;
     }
 
+
     if(frame2.mnId - frame1.mnId == 1)
     {
+        // EDGE
+        g2o::EdgeSE3* edge = new g2o::EdgeSE3();
 
-        /*use ceres to add edges*/
 
-        Edge3d edge;
-        edge.id_begin = frame2.mnId;
-        edge.id_end = frame1.mnId;
-        cv::Mat Tcl = frame2.mTcw*frame1.mTwc;
-        Pose3d T = Converter::toPose3d(Tcl);
-        edge.t_be = T;
+        edge->setVertex( 0, optimizer.vertex(frame1.mnId ));
+        edge->setVertex( 1, optimizer.vertex(frame2.mnId ));
+        edge->setRobustKernel( new g2o::RobustKernelHuber() );
+
+        // imformation Matrix
         Eigen::Matrix<double, 6, 6> information = Eigen::Matrix< double, 6,6 >::Identity();
-        edge.information = information;
+        //        information(0,0) = information(1,1) = information(2,2) = 100;
+        //        information(3,3) = information(4,4) = information(5,5) = 100;
 
-        Edges.push_back(edge);
-        cout << BOLDCYAN"Add a neaby edge!" << endl;
+        edge->setInformation( information );
 
-
+        Eigen::Isometry3d T = Converter::toIsometry3d(frame2.mTcw * frame1.mTwc);
+        edge->setMeasurement( T );
+        optimizer.addEdge(edge);
+        cout << BOLDCYAN"Add a nearby Edge!" << endl;
     }
 
     else if(nmatches > 280)
@@ -213,26 +225,38 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
 
         if(result.inliers > 100 && norm < 0.6)
         {
-            Edge3d edge;
-            edge.id_begin = frame2.mnId;
-            edge.id_end = frame1.mnId;
-            cv::Mat Tcl = frame2.mTcw*frame1.mTwc;
-            Pose3d T = Converter::toPose3d(Tcl);
-            edge.t_be = T;
-            Eigen::Matrix<double, 6, 6> information = Eigen::Matrix< double, 6,6 >::Identity();
-            edge.information = information;
 
-            Edges.push_back(edge);
 
-            cout << BOLDYELLOW"add a new edge! " << frame2.mnId << " --> " << frame1.mnId <<  endl;
-            if(frame2.mnId - frame1.mnId > 100)
-                outFileLoop << frame2.mnId << " " << frame1.mnId << endl;
+            if(!frame2.mHaveLoopEdge && !frame1.mHaveLoopEdge)
+            {
+                // EDGE
+                g2o::EdgeSE3* edge = new g2o::EdgeSE3();
+
+
+                edge->setVertex( 0, optimizer.vertex(frame1.mnId ));
+                edge->setVertex( 1, optimizer.vertex(frame2.mnId ));
+                edge->setRobustKernel( new g2o::RobustKernelHuber() );
+
+                // imformation Matrix
+                Eigen::Matrix<double, 6, 6> information = Eigen::Matrix< double, 6,6 >::Identity();
+                edge->setInformation( information );
+                Eigen::Isometry3d T = Converter::toIsometry3d(frame2.mTcw * frame1.mTwc);
+                edge->setMeasurement( T );
+                optimizer.addEdge(edge);
+
+                cout << BOLDYELLOW"add a new edge! " << frame2.mnId << " --> " << frame1.mnId <<  endl;
+                if(frame2.mnId - frame1.mnId > 100)
+                    outFileLoop << frame2.mnId << " " << frame1.mnId << endl;
+
+                frame2.mHaveLoopEdge = true;
+                frame1.mHaveLoopEdge = true;
+            }
+
         }
 
     }
 
 }
-
 
 std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFrame)
 {
@@ -271,7 +295,7 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
 
         }
     }
-    else if (currentFrame.mnId > 3306 && currentFrame.mnId < 3701)
+    else if (currentFrame.mnId > 3306 && currentFrame.mnId < 3416)
     {
         for(vector<Frame>::const_iterator vit = vFrames.begin(); vit!=(vFrames.end()-1);vit++)
         {
@@ -330,6 +354,7 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
     }
 
     return candidates;
+
 }
 
 int findFeatureMatches(Frame &lastFrame,
@@ -480,80 +505,4 @@ double normofTransform( cv::Mat rvec, cv::Mat tvec )
     return fabs(min(cv::norm(rvec), 2*M_PI-cv::norm(rvec)))+ fabs(cv::norm(tvec));
 }
 
-void BuildOptimizationProblem(const VectorOfEdges& Edges,
-                              MapOfPoses* poses, ceres::Problem* problem)
-{
 
-    ceres::LossFunction* loss_function = new ceres::HuberLoss(1.0);
-    ceres::LocalParameterization* quaternion_local_parameterization =
-            new EigenQuaternionParameterization;
-
-    for (VectorOfEdges::const_iterator Edges_iter =Edges.begin();Edges_iter != Edges.end(); ++Edges_iter)
-    {
-        const Edge3d& edge = *Edges_iter;
-
-        MapOfPoses::iterator pose_begin_iter = poses->find(edge.id_begin);
-        MapOfPoses::iterator pose_end_iter = poses->find(edge.id_end);
-
-
-
-        const Eigen::Matrix<double, 6, 6> sqrt_information = edge.information.llt().matrixL();
-        // Ceres will take ownership of the pointer.
-        ceres::CostFunction* cost_function =
-                PoseGraph3dErrorTerm::Create(edge.t_be, sqrt_information);
-
-        problem->AddResidualBlock(cost_function, loss_function,
-                                  pose_begin_iter->second.p.data(),
-                                  pose_begin_iter->second.q.coeffs().data(),
-                                  pose_end_iter->second.p.data(),
-                                  pose_end_iter->second.q.coeffs().data());
-
-        problem->SetParameterization(pose_begin_iter->second.q.coeffs().data(),
-                                     quaternion_local_parameterization);
-        problem->SetParameterization(pose_end_iter->second.q.coeffs().data(),
-                                     quaternion_local_parameterization);
-    }
-
-    MapOfPoses::iterator pose_start_iter = poses->begin();
-    problem->SetParameterBlockConstant(pose_start_iter->second.p.data());
-    problem->SetParameterBlockConstant(pose_start_iter->second.q.coeffs().data());
-}
-
-// Returns true if the solve was successful.
-bool SolveOptimizationProblem(ceres::Problem* problem)
-{
-
-  ceres::Solver::Options options;
-  options.max_num_iterations = 1000;
-  options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
-
-  ceres::Solver::Summary summary;
-  ceres::Solve(options, problem, &summary);
-
-  std::cout << summary.FullReport() << '\n';
-
-  return summary.IsSolutionUsable();
-}
-
-// Output the poses to the file with format: id x y z q_x q_y q_z q_w.
-bool OutputPoses(const std::string& filename, const MapOfPoses& poses)
-{
-  std::fstream outfile;
-  outfile.open(filename.c_str(), std::istream::out);
-  if (!outfile) {
-    cout << "Error opening the file: " << filename;
-    return false;
-  }
-  for (std::map<int, Pose3d, std::less<int>,
-                Eigen::aligned_allocator<std::pair<const int, Pose3d> > >::
-           const_iterator poses_iter = poses.begin();
-       poses_iter != poses.end(); ++poses_iter) {
-    const std::map<int, Pose3d, std::less<int>,
-                   Eigen::aligned_allocator<std::pair<const int, Pose3d> > >::
-        value_type& pair = *poses_iter;
-    outfile << pair.first << " " << pair.second.p.transpose() << " "
-            << pair.second.q.x() << " " << pair.second.q.y() << " "
-            << pair.second.q.z() << " " << pair.second.q.w() << '\n';
-  }
-  return true;
-}

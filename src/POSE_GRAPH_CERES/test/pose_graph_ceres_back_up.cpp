@@ -161,28 +161,13 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
 {
     /*first we need to check this two frames --> use ORBmatcher*/
 
-    int nmatches = 0;
-    if(frame2.mnId > 1592 && frame2.mnId < 1631)
-    {
-        ORBmatcher matcher(0.7,true);
+    ORBmatcher matcher(0.7,true);
 
-        nmatches = matcher.MatcheTwoFrames(frame2,frame1,5,false);
-        cout << "matches = " << nmatches << endl;
-    }
-    else if (frame2.mnId > 3306 && frame2.mnId < 3701)
-    {
-        ORBmatcher matcher(0.7,true);
-
-        nmatches = matcher.MatcheTwoFrames(frame2,frame1,5,false);
-        cout << "matches = " << nmatches << endl;
-    }
-    else if (frame2.mnId > 4460 && frame2.mnId < 4526)
-    {
-        ORBmatcher matcher(0.7,true);
-
-        nmatches = matcher.MatcheTwoFrames(frame2,frame1,5,false);
-        cout << "matches = " << nmatches << endl;
-    }
+    int nmatches = matcher.MatcheTwoFrames(frame2,frame1,5,false);
+    //vector<DMatch> matches;
+    //int nmatches = findFeatureMatches(frame1,frame2,matches);
+//    cout << "matches = " << nmatches << " ";
+//    cout << "ID = " << frame2.mnId << " " << frame1.mnId << endl;
 
     if(frame2.mnId - frame1.mnId == 1)
     {
@@ -204,14 +189,14 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
 
     }
 
-    else if(nmatches > 280)
+    else if(nmatches > 180)
     {
 
         /*now we check the motion and inliers of this two frame*/
         RESULT_OF_PNP result = motionEstimate(frame1,frame2);
         double norm = normofTransform(result.rvec,result.tvec);
 
-        if(result.inliers > 100 && norm < 0.6)
+        if(result.inliers > 80 && norm < 1.2)
         {
             Edge3d edge;
             edge.id_begin = frame2.mnId;
@@ -239,97 +224,36 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
     /*here we need to get the candidate frames according to the Twc*/
     std::vector<Frame> candidates;
     //cout << BOLDGREEN"candidate frames id = ";
-    /*we need add the last frame*/
-    candidates.push_back(vFrames.back());
 
-    if(currentFrame.mnId > 1592 && currentFrame.mnId < 1631) /*The first part*/
+    for(vector<Frame>::const_iterator vit = vFrames.begin(); vit!=vFrames.end();vit++)
     {
-        for(vector<Frame>::const_iterator vit = vFrames.begin(); vit!=(vFrames.end()-1);vit++)
+        if(currentFrame.mnId - Frame(*vit).mnId > 5 && currentFrame.mnId - Frame(*vit).mnId < 100)
+            continue;
+
+        cv::Mat twc = Frame(*vit).GetCameraCenter();
+
+        if(currentFrame.mnId - Frame(*vit).mnId < 5) /*near by frames --> can write to the config files*/
         {
-            if(currentFrame.mnId - Frame(*vit).mnId > 1 && currentFrame.mnId - Frame(*vit).mnId < 500)
-                continue;
-
-            cv::Mat twc = Frame(*vit).GetCameraCenter();
-
-            //        if(currentFrame.mnId - Frame(*vit).mnId == 1) /*near by frames --> can write to the config files*/
-            //        {
-            //            candidates.push_back(*vit);
-            //        }
-
-
-            bool isInRange = currentFrame.isInSearchRange(twc);
-            if(isInRange)
+            candidates.push_back(*vit);
+        }
+        bool isInRange = currentFrame.isInSearchRange(twc);
+        if(isInRange)
+        {
+            if(currentFrame.mnId - Frame(*vit).mnId >= 100 )
             {
-                if(currentFrame.mnId - Frame(*vit).mnId >= 100 )
-                {
-                    candidates.push_back(*vit);
-                    cout << Frame(*vit).mnId << " ";
-                    cout << BOLDRED"may be we got a loop!" << endl;
-                }
-
+                candidates.push_back(*vit);
+                cout << Frame(*vit).mnId << " ";
+                cout << BOLDRED"may be we got a loop!" << endl;
             }
 
         }
+
     }
-    else if (currentFrame.mnId > 3306 && currentFrame.mnId < 3701)
-    {
-        for(vector<Frame>::const_iterator vit = vFrames.begin(); vit!=(vFrames.end()-1);vit++)
-        {
-            if(currentFrame.mnId - Frame(*vit).mnId > 1 && currentFrame.mnId - Frame(*vit).mnId < 500)
-                continue;
 
-            cv::Mat twc = Frame(*vit).GetCameraCenter();
-
-            //        if(currentFrame.mnId - Frame(*vit).mnId == 1) /*near by frames --> can write to the config files*/
-            //        {
-            //            candidates.push_back(*vit);
-            //        }
-
-
-            bool isInRange = currentFrame.isInSearchRange(twc);
-            if(isInRange)
-            {
-                if(currentFrame.mnId - Frame(*vit).mnId >= 100 )
-                {
-                    candidates.push_back(*vit);
-                    cout << Frame(*vit).mnId << " ";
-                    cout << BOLDRED"may be we got a loop!" << endl;
-                }
-
-            }
-        }
-    }
-    else if (currentFrame.mnId > 4460 && currentFrame.mnId < 4526)
-    {
-        for(vector<Frame>::const_iterator vit = vFrames.begin(); vit!=(vFrames.end()-1);vit++)
-        {
-            if(currentFrame.mnId - Frame(*vit).mnId > 1 && currentFrame.mnId - Frame(*vit).mnId < 500)
-                continue;
-
-            cv::Mat twc = Frame(*vit).GetCameraCenter();
-
-            //        if(currentFrame.mnId - Frame(*vit).mnId == 1) /*near by frames --> can write to the config files*/
-            //        {
-            //            candidates.push_back(*vit);
-            //        }
-
-
-            bool isInRange = currentFrame.isInSearchRange(twc);
-            if(isInRange)
-            {
-                if(currentFrame.mnId - Frame(*vit).mnId >= 100 )
-                {
-                    candidates.push_back(*vit);
-                    cout << Frame(*vit).mnId << " ";
-                    cout << BOLDRED"may be we got a loop!" << endl;
-                }
-
-            }
-
-        }
-    }
+    cout << endl;
 
     return candidates;
+
 }
 
 int findFeatureMatches(Frame &lastFrame,
