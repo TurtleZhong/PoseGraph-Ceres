@@ -5,6 +5,7 @@
 #include "MapPoint.h"
 #include "converter.h"
 #include "SequenceRun.h"
+#include "ImageRead.h"
 
 #include <fstream>
 
@@ -14,19 +15,21 @@ using namespace POSE_GRAPH;
 int main(int argc, char *argv[])
 {
 
-    Config::setParameterFile("/home/m/ws_orb2/src/POSE_GRAPH/config/config.yaml");
+    Config::setParameterFile("../config/config.yaml");
     string dir = Config::get<string>("sequence_dir");
 
     ifstream inFile;
     //inFile.open("/home/m/KITTI/dataset/sequences/99/timestamp.txt");
     ofstream outFile;
-    outFile.open("/home/m/KITTI/dataset/sequences/99/trajectory.txt");
+    //outFile.open("/home/m/KITTI/dataset/sequences/99/trajectory.txt");
     vector<int> Quality;
     Quality.reserve(1);
     Quality.push_back(0);
 
 
     GroundTruth gd;
+    ImageReader im;
+
 
 
     for(int32_t i = 0; i < 4541; i++)
@@ -48,14 +51,21 @@ int main(int argc, char *argv[])
 
 //        imwrite(ss,Left,Quality);
 //        imwrite(ss1,Right,Quality);
-        cv::Mat Twc = gd.getFrameTwc(i);
-        Pose3d pose = Converter::toPose3d(Twc);
-        Eigen::Vector3d p = pose.p;
-        Eigen::Quaterniond q = pose.q;
+//        cv::Mat Twc = gd.getFrameTwc(i);
+//        Pose3d pose = Converter::toPose3d(Twc);
+//        Eigen::Vector3d p = pose.p;
+//        Eigen::Quaterniond q = pose.q;
 
-        outFile << p(0)  << " " << p(1) << " " << p(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+//        outFile << p(0)  << " " << p(1) << " " << p(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
+
+//        cout << endl << gd.getFrameTwc(i) << endl;
+
+
+        cout << im.getImagePath(i)[0] << endl << im.getImagePath(i)[1] << endl;
+
 
         cv::waitKey(27);
+
 
 
 

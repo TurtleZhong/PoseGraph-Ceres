@@ -8,6 +8,7 @@
 #include "ORBmatcher.h"
 #include "PoseGraph3dError.h"
 #include "types.h"
+#include "ImageRead.h"
 
 /*ceres parts*/
 #include <ceres/ceres.h>
@@ -63,14 +64,12 @@ int main(int argc, char *argv[])
     outFile.open("../camera_poses.txt");
     outFileLoop.open("../result/Edges/edges_for_loop.txt");
 
+    ImageReader im;
+
     for(int32_t i = 0; i < sequenceLength; i++)
     {
-        char base_name[256];
-        sprintf(base_name,"%06d.png",i);
-        string left_img_file_name = dir + "/image_0/" + base_name;
-        string right_img_file_name = dir + "/image_1/" + base_name;
-        Mat Left = cv::imread(left_img_file_name,CV_LOAD_IMAGE_GRAYSCALE);
-        Mat Right = cv::imread(right_img_file_name,CV_LOAD_IMAGE_GRAYSCALE);
+        Mat Left = cv::imread(im.getImagePath(i)[0],CV_LOAD_IMAGE_GRAYSCALE);
+        Mat Right = cv::imread(im.getImagePath(i)[1],CV_LOAD_IMAGE_GRAYSCALE);
         cout << RESET"Process :" << i << endl;
 
         sequenceRun->GrabImageStereo(Left,Right,0.0);
@@ -150,21 +149,21 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
     {
         ORBmatcher matcher(0.7,true);
 
-        nmatches = matcher.MatcheTwoFrames(frame2,frame1,5,false);
+        nmatches = matcher.MatcheTwoFrames(frame2,frame1,false); //5
         cout << "matches = " << nmatches << endl;
     }
-    else if (frame2.mnId > 3306 && frame2.mnId < 3701)
+    else if (frame2.mnId > 3306 && frame2.mnId < 3316) //3701
     {
         ORBmatcher matcher(0.7,true);
 
-        nmatches = matcher.MatcheTwoFrames(frame2,frame1,5,false);
+        nmatches = matcher.MatcheTwoFrames(frame2,frame1,false);
         cout << "matches = " << nmatches << endl;
     }
     else if (frame2.mnId > 4460 && frame2.mnId < 4526)
     {
         ORBmatcher matcher(0.7,true);
 
-        nmatches = matcher.MatcheTwoFrames(frame2,frame1,5,false);
+        nmatches = matcher.MatcheTwoFrames(frame2,frame1,false);
         cout << "matches = " << nmatches << endl;
     }
 
@@ -195,12 +194,23 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
         RESULT_OF_PNP result = motionEstimate(frame1,frame2);
         double norm = normofTransform(result.rvec,result.tvec);
 
+        cout << BOLDMAGENTA"pnp_result: " << "result.inliers = " << result.inliers << " norm = " << norm << endl;
+
         if(result.inliers > 100 && norm < 0.6)
         {
+            /*here we need use the estimated pose but not the groundTruth*/
+            cv::Mat R;
+            cv::Rodrigues(result.rvec,R);
+            R.convertTo(R,CV_32FC1);
+            cv::Mat Tcl = Mat::eye(4,4,CV_32FC1);
+            R.copyTo(Tcl.rowRange(0,3).colRange(0,3));
+            result.tvec.copyTo(Tcl.rowRange(0,3).col(3));
+
+
             Edge3d edge;
             edge.id_begin = frame2.mnId;
             edge.id_end = frame1.mnId;
-            cv::Mat Tcl = frame2.mTcw*frame1.mTwc;
+//            cv::Mat Tcl = frame2.mTcw*frame1.mTwc;
             Pose3d T = Converter::toPose3d(Tcl);
             edge.t_be = T;
             Eigen::Matrix<double, 6, 6> information = Eigen::Matrix< double, 6,6 >::Identity();
@@ -241,7 +251,7 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
                 if(currentFrame.mnId - Frame(*vit).mnId >= 100 )
                 {
                     candidates.push_back(*vit);
-                    cout << Frame(*vit).mnId << " ";
+                    cout << "Candiate frame id:" << Frame(*vit).mnId << " ";
                     cout << BOLDRED"may be we got a loop!" << endl;
                 }
 
@@ -249,7 +259,7 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
 
         }
     }
-    else if (currentFrame.mnId > 3306 && currentFrame.mnId < 3701)
+    else if (currentFrame.mnId > 3306 && currentFrame.mnId < 3316) //3701
     {
         for(vector<Frame>::const_iterator vit = vFrames.begin(); vit!=(vFrames.end()-1);vit++)
         {
@@ -264,7 +274,7 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
                 if(currentFrame.mnId - Frame(*vit).mnId >= 100 )
                 {
                     candidates.push_back(*vit);
-                    cout << Frame(*vit).mnId << " ";
+                    cout << "Candiate frame id:" << Frame(*vit).mnId << " ";
                     cout << BOLDRED"may be we got a loop!" << endl;
                 }
 
@@ -285,7 +295,7 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
             {
                 if(currentFrame.mnId - Frame(*vit).mnId >= 100 )
                 {
-                    candidates.push_back(*vit);
+                    cout << "Candiate frame id:" << Frame(*vit).mnId << " ";
                     cout << Frame(*vit).mnId << " ";
                     cout << BOLDRED"may be we got a loop!" << endl;
                 }

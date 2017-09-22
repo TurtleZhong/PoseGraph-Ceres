@@ -1,9 +1,16 @@
 %YAML:1.0
 # data
-poses_dir: /home/m/KITTI/poses/00.txt
-sequence_dir: /home/m/KITTI/dataset/sequences/00
-timestamp_path: /home/m/KITTI/poses/times.txt
+#poses_dir: /home/m/KITTI/poses/00.txt
+poses_dir: /home/m/KITTI/dataset/sequences/99/trajectory.txt
+sequence_dir: /home/m/KITTI/dataset/sequences/99
+timestamp_path: /home/m/KITTI/dataset/sequences/99/timestamp.txt
 sequence_length: 4541
+
+# file format
+# if == 1 --> x y z q.x q.y q.z q.w
+# if == 2 --> KITTI format
+trajectory_format: 1
+
 
 #pose_graph
 search_radius: 6

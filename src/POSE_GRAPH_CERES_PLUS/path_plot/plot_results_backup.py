@@ -38,11 +38,8 @@ parser.add_option("--initial_poses", dest="initial_poses",
                   default="", help="The filename that contains the original poses.")
 parser.add_option("--optimized_poses", dest="optimized_poses",
                   default="", help="The filename that contains the optimized poses.")
-parser.add_option("--edges_for_loop", dest="edges_for_loop",
-                  default="", help="The filename that contains the edges for loop.")
 parser.add_option("-e", "--axes_equal", action="store_true", dest="axes_equal",
                   default="", help="Make the plot axes equal.")
-
 (options, args) = parser.parse_args()
 
 # Read the original and optimized poses files.
@@ -55,11 +52,6 @@ poses_optimized = None
 if options.optimized_poses != '':
   poses_optimized = numpy.genfromtxt(options.optimized_poses,
                                      usecols = (1, 2, 3))
-loop_edges = None
-if options.edges_for_loop != '':
-    loop_edges = numpy.genfromtxt(options.edges_for_loop,
-                                  usecols= (0,1))
-
 
 # Plots the results for the specified poses.
 figure = plot.figure()
@@ -68,14 +60,6 @@ if poses_original is not None:
   axes = plot.subplot(1, 2, 1, projection='3d')
   plot.plot(poses_original[:, 0], poses_original[:, 1], poses_original[:, 2],
             '-', alpha=0.5, color="green")
-# plot the edges
-  for row in loop_edges:
-      current = int(row[0])
-      last = int(row[1])
-      edges = numpy.array([[poses_original[current, 0], poses_original[current, 1], poses_original[current, 2]],
-                           [poses_original[last, 0], poses_original[last, 1], poses_original[last, 2]]])
-      plot.plot(edges[:, 0], edges[:, 1], edges[:, 2],
-                '-', alpha=0.5, color="red")
   plot.title('Original')
   if options.axes_equal:
     axes.set_aspect('equal')
@@ -86,21 +70,10 @@ if poses_optimized is not None:
   axes = plot.subplot(1, 2, 2, projection='3d')
   plot.plot(poses_optimized[:, 0], poses_optimized[:, 1], poses_optimized[:, 2],
             '-', alpha=0.5, color="blue")
-# plot the edges
-  for row in loop_edges:
-      current = int(row[0])
-      last = int(row[1])
-      edges = numpy.array([[poses_optimized[current, 0], poses_optimized[current, 1], poses_optimized[current, 2]],
-                           [poses_optimized[last, 0], poses_optimized[last, 1], poses_optimized[last, 2]]])
-      plot.plot(edges[:, 0], edges[:, 1], edges[:, 2],
-                '-', alpha=0.5, color="red")
-
   plot.title('Optimized')
   if options.axes_equal:
     axes.set_aspect('equal')
     set_axes_equal(plot.gca())
-
-# plot the edges
 
 
 # Show the plot and wait for the user to close.

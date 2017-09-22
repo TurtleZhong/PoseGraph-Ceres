@@ -3,7 +3,7 @@
 # Plots the results from the 3D pose graph optimization. It will draw a line
 # between consecutive vertices.  The commandline expects two optional filenames:
 #
-#   ./plot_results.py --initial_poses filename  --optimized_poses filename
+#   ./plot_results.py --initial_poses filename  --optimized_poses filename --edges_for_loop filename
 #
 # The files have the following format:
 #   ID x y z q_x q_y q_z q_w

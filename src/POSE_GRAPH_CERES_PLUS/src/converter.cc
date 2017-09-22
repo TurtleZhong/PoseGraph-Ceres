@@ -70,6 +70,16 @@ cv::Mat Converter::toCvMat(const Eigen::Quaterniond &q)
 
 }
 
+cv::Mat Converter::toCvMat(const Pose3d &pose)
+{
+    cv::Mat R = toCvMat(pose.q.toRotationMatrix());
+    cv::Mat t = toCvMat(pose.p);
+    cv::Mat T = cv::Mat::eye(4,4,CV_32F);
+    R.copyTo(T.rowRange(0,3).colRange(0,3));
+    t.copyTo(T.rowRange(0,3).col(3));
+    return T.clone();
+}
+
 cv::Mat Converter::toCvSE3(const Eigen::Matrix<double,3,3> &R, const Eigen::Matrix<double,3,1> &t)
 {
     cv::Mat cvMat = cv::Mat::eye(4,4,CV_32F);

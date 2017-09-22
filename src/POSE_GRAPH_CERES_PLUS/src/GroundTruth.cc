@@ -1,24 +1,30 @@
 #include "GroundTruth.h"
 #include "config.h"
 #include "string.h"
+#include "converter.h"
 #include <fstream>
 
 namespace POSE_GRAPH
 {
 GroundTruth::GroundTruth()
 {
+    int fileFormat = Config::get<int> ("trajectory_format");
+    cout << "fileFormat = " << fileFormat << endl;
 
-    this->loadPoses();
+    if(fileFormat == 1)
+        this->loadPoses1();
+    else if (fileFormat == 2)
+        this->loadPoses2();
+    else
+        cout << "Invalid trajectory format! Please check the file format." << endl;
 }
 
-void GroundTruth::loadPoses()
+void GroundTruth::loadPoses2()
 {
-    /*"/home/m/KITTI/poses/00.txt"*/
     this->sequenceDir = Config::get< string > ("poses_dir");
     fstream inFile;
 
     inFile.open(sequenceDir.c_str());
-    int count = 0;
     while(inFile.good())
     {
         Mat P = Mat::eye(4,4,CV_64FC1);
@@ -35,7 +41,33 @@ void GroundTruth::loadPoses()
         tmp = P.clone();
         poses.push_back(tmp);
         inFile.get();
-        count++;
+    }
+
+}
+
+void GroundTruth::loadPoses1()
+{
+    this->sequenceDir = Config::get< string > ("poses_dir");
+    fstream inFile;
+
+    inFile.open(sequenceDir.c_str());
+    while(inFile.good())
+    {
+
+        Vector3d p;
+
+        double trans[4] = {0,0,0,0};
+
+        inFile >> p(0) >> p(1) >> p(2) >> trans[1] >> trans[2] >> trans[3] >> trans[0];
+        Eigen::Quaterniond q(trans);
+
+        Pose3d pose;
+        pose.p = p;
+        pose.q = q;
+
+        cv::Mat P = Converter::toCvMat(pose);
+        poses.push_back(P);
+        inFile.get();
     }
 
 }

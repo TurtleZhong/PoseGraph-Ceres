@@ -29,10 +29,11 @@ public:
     Mat getFrameRcw(int frameID);
     Mat getFrametcw(int frameID);
     Mat getFrameTcw(int frameID);
-    void loadPoses();
+    void loadPoses1();
+    void loadPoses2();
 
-public:
-    vector <cv::Mat> poses; //here we save the poses of the sequence. default: sequence00
+private:
+    vector <cv::Mat> poses;
     string sequenceDir;
 
 };

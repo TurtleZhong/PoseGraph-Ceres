@@ -26,7 +26,7 @@ else()
    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
-LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
+#LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
 
 
@@ -38,7 +38,8 @@ if(NOT OpenCV_FOUND)
    endif()
 endif()
 
-find_package(Eigen3 3.1.0 REQUIRED)
+include_directories("/usr/include/eigen3")
+#find_package(Eigen3 3.1.0 REQUIRED)
 
 # Sophus
 find_package( Sophus REQUIRED )
@@ -67,6 +68,7 @@ add_library(${PROJECT_NAME} SHARED
     src/ORBextractor.cc
     src/ORBmatcher.cc
     src/SequenceRun.cc
+    src/ImageRead.cc
 
 )
 
@@ -85,4 +87,7 @@ target_link_libraries(pose_graph_ceres ${PROJECT_NAME})
 
 add_executable(frame_test test/frame_test.cpp )
 target_link_libraries(frame_test ${PROJECT_NAME})
+
+add_executable(fake_loop_generate test/fake_loop_generate.cpp )
+target_link_libraries(fake_loop_generate ${PROJECT_NAME})
 
