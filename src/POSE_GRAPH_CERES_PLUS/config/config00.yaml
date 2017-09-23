@@ -1,8 +1,8 @@
 %YAML:1.0
 # data
-poses_dir: /home/m/KITTI/poses/05.txt
-sequence_dir: /home/m/KITTI/dataset/sequences/05
-sequence_length: 2761
+poses_dir: /home/m/KITTI/poses/00.txt
+sequence_dir: /home/m/KITTI/dataset/sequences/00
+sequence_length: 4541
 
 # file format
 # if == 1 --> x y z q.x q.y q.z q.w

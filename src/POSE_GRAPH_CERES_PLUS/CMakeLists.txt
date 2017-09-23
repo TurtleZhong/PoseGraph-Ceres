@@ -91,3 +91,9 @@ target_link_libraries(frame_test ${PROJECT_NAME})
 add_executable(fake_loop_generate test/fake_loop_generate.cpp )
 target_link_libraries(fake_loop_generate ${PROJECT_NAME})
 
+add_executable(match_test test/match_test.cpp )
+target_link_libraries(match_test ${PROJECT_NAME})
+
+add_executable(match_test2 test/match_test2.cpp )
+target_link_libraries(match_test2 ${PROJECT_NAME})
+

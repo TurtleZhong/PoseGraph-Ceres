@@ -32,12 +32,12 @@ double normofTransform( cv::Mat rvec, cv::Mat tvec );
 void checkForPoseGraph(vector<Frame>& vFrames, Frame &currentFrame, VectorOfEdges &Edges);
 void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges);
 std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFrame);
-int findFeatureMatches(Frame &lastFrame, Frame &currentFrame, vector<DMatch> &matches, string method = "BF");
 RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2);
 void BuildOptimizationProblem(const VectorOfEdges& Edges,
                               MapOfPoses* poses, ceres::Problem* problem);
 bool SolveOptimizationProblem(ceres::Problem* problem);
 bool OutputPoses(const std::string& filename, const MapOfPoses& poses);
+cv::Mat DrawFrameMatch(Frame &currentFrame, Frame &lastFrame);
 
 ofstream outFileLoop;
 
@@ -88,10 +88,10 @@ int main(int argc, char *argv[])
             checkForPoseGraph(vCandidateFrames, currentFrame, Edges);
         }
 
-        //cv::imshow("currentFrame", sequenceRun->mImGray);
+        cv::imshow("currentFrame", currentFrame.mImageGray);
 
 
-        //cv::waitKey(27);
+        cv::waitKey(27);
 
         vFrames.push_back(currentFrame);
 
@@ -124,6 +124,22 @@ int main(int argc, char *argv[])
         cout << "May be some problems!" << endl;
 
     // Output the poses to the file with format: id x y z q_x q_y q_z q_w.
+    OutputPoses("../result/trajectory/trajectory_update_y_not_constant.txt",poses);
+
+    /*suppose taht y is constant*/
+    GroundTruth gd;
+    int id = 0;
+
+    for(MapOfPoses::iterator pose_iter = poses.begin(); pose_iter!=poses.end(); pose_iter++)
+    {
+        cv::Mat twc = gd.getFrametwc(id);
+
+        pose_iter->second.p(1) = (double)twc.at<float>(1,3);
+
+        id++;
+
+    }
+
     OutputPoses("../result/trajectory/trajectory_update.txt",poses);
 
 
@@ -145,26 +161,27 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
     /*first we need to check this two frames --> use ORBmatcher*/
 
     int nmatches = 0;
-    if(frame2.mnId > 1592 && frame2.mnId < 1631)
+    if(frame2.mnId > 1592 && frame2.mnId < 1631)//1631
     {
-        ORBmatcher matcher(0.7,true);
+        ORBmatcher matcher(0.7,false);
 
         nmatches = matcher.MatcheTwoFrames(frame2,frame1,false); //5
-        cout << "matches = " << nmatches << endl;
+        cout << RESET"Frame" << frame2.mnId << "--" <<"Frame" << frame1.mnId << " matches = " << nmatches << endl;
     }
-    else if (frame2.mnId > 3306 && frame2.mnId < 3316) //3701
+    else if (frame2.mnId > 3306 && frame2.mnId < 4000) //3701
     {
-        ORBmatcher matcher(0.7,true);
+        ORBmatcher matcher(0.7,false);
 
         nmatches = matcher.MatcheTwoFrames(frame2,frame1,false);
-        cout << "matches = " << nmatches << endl;
+        //        cout << RESET"matches = " << nmatches << endl;
+        cout << RESET"Frame" << frame2.mnId << "--" <<"Frame" << frame1.mnId << " matches = " << nmatches << endl;
     }
     else if (frame2.mnId > 4460 && frame2.mnId < 4526)
     {
-        ORBmatcher matcher(0.7,true);
+        ORBmatcher matcher(0.7,false);
 
         nmatches = matcher.MatcheTwoFrames(frame2,frame1,false);
-        cout << "matches = " << nmatches << endl;
+        cout << RESET"Frame" << frame2.mnId << "--" <<"Frame" << frame1.mnId << " matches = " << nmatches << endl;
     }
 
     if(frame2.mnId - frame1.mnId == 1)
@@ -187,43 +204,62 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
 
     }
 
-    else if(nmatches > 280)
+    if(frame2.mnId - frame1.mnId > 1 && nmatches > 280)
     {
 
         /*now we check the motion and inliers of this two frame*/
         RESULT_OF_PNP result = motionEstimate(frame1,frame2);
         double norm = normofTransform(result.rvec,result.tvec);
 
-        cout << BOLDMAGENTA"pnp_result: " << "result.inliers = " << result.inliers << " norm = " << norm << endl;
+        cout << BOLDMAGENTA"Frame:" << frame2.mnId << " pnp_result: " << "result.inliers = " << result.inliers << " norm = " << norm << endl;
 
-        if(result.inliers > 100 && norm < 0.6)
+        if(result.inliers > 100 && norm < 0.7)
         {
             /*here we need use the estimated pose but not the groundTruth*/
-            cv::Mat R;
-            cv::Rodrigues(result.rvec,R);
-            R.convertTo(R,CV_32FC1);
-            cv::Mat Tcl = Mat::eye(4,4,CV_32FC1);
-            R.copyTo(Tcl.rowRange(0,3).colRange(0,3));
-            result.tvec.copyTo(Tcl.rowRange(0,3).col(3));
+            if(!frame2.mHaveLoopEdge && !frame1.mHaveLoopEdge)
+            {
+                cv::Mat R;
+                cv::Rodrigues(result.rvec,R);
+                R.convertTo(R,CV_32FC1);
+                cv::Mat Tcl = Mat::eye(4,4,CV_32FC1);
+                R.copyTo(Tcl.rowRange(0,3).colRange(0,3));
+                result.tvec.copyTo(Tcl.rowRange(0,3).col(3));
 
 
-            Edge3d edge;
-            edge.id_begin = frame2.mnId;
-            edge.id_end = frame1.mnId;
-//            cv::Mat Tcl = frame2.mTcw*frame1.mTwc;
-            Pose3d T = Converter::toPose3d(Tcl);
-            edge.t_be = T;
-            Eigen::Matrix<double, 6, 6> information = Eigen::Matrix< double, 6,6 >::Identity();
-            edge.information = information;
+                Edge3d edge;
+                edge.id_begin = frame2.mnId;
+                edge.id_end = frame1.mnId;
+                /* new add 09.23 */
+                //cv::Mat Tcl_gd = frame2.mTcw * frame1.mTwc;
 
-            Edges.push_back(edge);
 
-            cout << BOLDYELLOW"add a new edge! " << frame2.mnId << " --> " << frame1.mnId <<  endl;
-            if(frame2.mnId - frame1.mnId > 100)
-                outFileLoop << frame2.mnId << " " << frame1.mnId << endl;
+                //            cv::Mat Tcl = frame2.mTcw*frame1.mTwc;
+                Pose3d T = Converter::toPose3d(Tcl);
+
+                //T.p(1) = (double)Tcl_gd.at<float>(1,3);
+
+
+                edge.t_be = T;
+                Eigen::Matrix<double, 6, 6> information = Eigen::Matrix< double, 6,6 >::Identity();
+                edge.information = information;
+
+                Edges.push_back(edge);
+                cv::Mat imMatch = DrawFrameMatch(frame2,frame1);
+                imshow("Match", imMatch);
+
+
+                cout << BOLDYELLOW"add a new edge! " << frame2.mnId << " --> " << frame1.mnId <<  endl;
+                if(frame2.mnId - frame1.mnId > 100)
+                    outFileLoop << frame2.mnId << " " << frame1.mnId << endl;
+
+                frame2.mHaveLoopEdge = true;
+                frame1.mHaveLoopEdge = true;
+            }
         }
 
     }
+
+    cout << RESET"Frame:" << frame2.mnId << " have loop egde: " << frame2.mHaveLoopEdge << endl;
 
 }
 
@@ -236,7 +272,7 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
     /*we need add the last frame*/
     candidates.push_back(vFrames.back());
 
-    if(currentFrame.mnId > 1592 && currentFrame.mnId < 1631) /*The first part*/
+    if(currentFrame.mnId > 1592 && currentFrame.mnId < 1631) /*The first part 1631*/
     {
         for(vector<Frame>::const_iterator vit = vFrames.begin(); vit!=(vFrames.end()-1);vit++)
         {
@@ -251,7 +287,7 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
                 if(currentFrame.mnId - Frame(*vit).mnId >= 100 )
                 {
                     candidates.push_back(*vit);
-                    cout << "Candiate frame id:" << Frame(*vit).mnId << " ";
+                    cout << RESET"Candiate frame id:" << Frame(*vit).mnId << " ";
                     cout << BOLDRED"may be we got a loop!" << endl;
                 }
 
@@ -259,7 +295,7 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
 
         }
     }
-    else if (currentFrame.mnId > 3306 && currentFrame.mnId < 3316) //3701
+    else if (currentFrame.mnId > 3306 && currentFrame.mnId < 4000) //3701
     {
         for(vector<Frame>::const_iterator vit = vFrames.begin(); vit!=(vFrames.end()-1);vit++)
         {
@@ -274,7 +310,7 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
                 if(currentFrame.mnId - Frame(*vit).mnId >= 100 )
                 {
                     candidates.push_back(*vit);
-                    cout << "Candiate frame id:" << Frame(*vit).mnId << " ";
+                    cout << RESET"Candiate frame id:" << Frame(*vit).mnId << " ";
                     cout << BOLDRED"may be we got a loop!" << endl;
                 }
 
@@ -295,8 +331,8 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
             {
                 if(currentFrame.mnId - Frame(*vit).mnId >= 100 )
                 {
-                    cout << "Candiate frame id:" << Frame(*vit).mnId << " ";
-                    cout << Frame(*vit).mnId << " ";
+                    candidates.push_back(*vit);
+                    cout << RESET"Candiate frame id:" << Frame(*vit).mnId << " ";
                     cout << BOLDRED"may be we got a loop!" << endl;
                 }
 
@@ -308,104 +344,15 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
     return candidates;
 }
 
-int findFeatureMatches(Frame &lastFrame,
-                       Frame &currentFrame,
-                       vector<DMatch> &matches,
-                       string method)
-{
-    /*
-      * define the detect param: use ORB
-      */
-    Ptr<ORB> orb = ORB::create(1000);
-    Mat descriptors;
-    std::vector<KeyPoint> keypoints1,keypoints2;
-    /*
-      * use detect() function to detect keypoints
-      */
-    orb-> detect(currentFrame.mImageGray, keypoints1);
-    /*
-      * conpute the extractor and show the keypoints
-      */
-    orb-> compute(currentFrame.mImageGray, keypoints1, descriptors);
-
-    Mat testDescriptors;
-    orb->detect(lastFrame.mImageGray, keypoints2);
-    orb->compute(lastFrame.mImageGray, keypoints2,testDescriptors);
-
-    //vector<DMatch> match;
-    /*
-      * FLANN
-      */
-
-    if(method == "KNN" || method == "knn")
-    {
-        testDescriptors.convertTo(testDescriptors,CV_32S);
-        descriptors.convertTo(testDescriptors,CV_32S);
-        flann::Index flannIndex(testDescriptors, flann::LshIndexParams(12, 20, 2), cvflann::FLANN_DIST_HAMMING);
-
-
-
-        /*Match the feature*/
-        Mat matchIndex(descriptors.rows, 2, CV_32S);
-        Mat matchDistance(descriptors.rows, 2, CV_32S);
-        flannIndex.knnSearch(descriptors.rows, matchIndex, matchDistance, 2, flann::SearchParams());
-
-        //vector<DMatch> goodMatches;
-        for (int i = 0; i < matchDistance.rows; i++)
-        {
-            if(matchDistance.at<float>(i,0) < 0.75 * matchDistance.at<float>(i, 1))
-            {
-                DMatch dmatchs(i, matchIndex.at<int>(i,0), matchDistance.at<float>(i,1));
-                matches.push_back(dmatchs);
-            }
-        }
-
-    }
-    else if(method == "BF")
-    {
-        vector<DMatch> tmpMatches;
-        BFMatcher matcher(NORM_HAMMING);
-        matcher.match(descriptors, testDescriptors, tmpMatches);
-        double min_dist = 10000, max_dist = 0;
-        for(int i = 0; i < descriptors.rows; i++)
-        {
-            double dist = tmpMatches[i].distance;
-            if(dist < min_dist) min_dist = dist;
-            if(dist > max_dist) max_dist = dist;
-        }
-        cout << "--Max dist = " << max_dist << endl;
-        cout << "--Min dist = " << min_dist << endl;
-
-        for(int i =0; i < descriptors.rows; i++)
-        {
-            if(tmpMatches[i].distance <= max(2*min_dist, 30.0))
-            {
-                matches.push_back(tmpMatches[i]);
-            }
-        }
-
-    }
-
-    Mat resultImage;
-    drawMatches(currentFrame.mImageGray, keypoints1, lastFrame.mImageGray, keypoints2, matches, resultImage);
-    imshow("result of Image", resultImage);
-    cv::waitKey(27);
-
-    cout << "We got " << matches.size() << " good Matchs" << endl;
-    return (int)matches.size();
-}
 
 /*we need a simple function to estimate the inliers and pose*/
 RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2)
 {
     RESULT_OF_PNP result;
     map<int,int> matches = frame2.matchesId;
-    // 3d points in first frame
     vector<cv::Point3f> pts_obj;
-    // pixel in second frame
     vector< cv::Point2f > pts_img;
 
-    // Camera internal params
     Camera* pCamera = new Camera();
 
     for(map<int,int>::const_iterator mit = matches.begin(); mit!=matches.end(); mit++)
@@ -414,7 +361,7 @@ RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2)
         cv::Point2f p = frame1.mvKeys[mit->second].pt;
         pts_img.push_back( cv::Point2f( frame2.mvKeys[mit->first].pt ) );
 
-        // Transform (u,v,d) to (x,y,z)
+        // 将(u,v,d)转成(x,y,z)
         cv::Point2f pt ( p.x, p.y );
         float depth = frame1.mvDepth[mit->second];
 
@@ -438,15 +385,44 @@ RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2)
         {0, 0, 1}
     };
 
-    // construct the camera Matrix
+    // 构建相机矩阵
     cv::Mat cameraMatrix( 3, 3, CV_64F, camera_matrix_data );
     cv::Mat rvec, tvec, inliers;
-    // Solve pnp
-    cv::solvePnPRansac( pts_obj, pts_img, cameraMatrix, cv::Mat(), rvec, tvec, false, 200, 4.0, 0.99, inliers );
+    // 求解pnp
+    cv::solvePnPRansac( pts_obj, pts_img, cameraMatrix, cv::Mat(), rvec, tvec, false, 200, 2.0, 0.99, inliers );
 
     result.rvec = rvec;
     result.tvec = tvec;
     result.inliers = inliers.rows;
+    //    cout << "inliers = " <<  endl << inliers << endl;
+
+    /*remove the outliers*/
+    map<int,int> matches_out;
+    for(int i = 0; i < inliers.rows; i++)
+    {
+        int row = inliers.at<int>(i);
+        map<int,int>::const_iterator map_iter_start = matches.begin();
+
+        if (row == 0)
+        {
+            matches_out.insert(make_pair(map_iter_start->first,map_iter_start->second));
+        }
+        else
+        {
+            while(row)
+            {
+                map_iter_start++;
+                row--;
+            }
+            matches_out.insert(make_pair(map_iter_start->first,map_iter_start->second));
+        }
+
+
+    }
+
+    //cout << "matches out.size = " << matches_out.size() << endl;
+    frame2.matchesId.clear();
+    frame2.matchesId = matches_out;
 
     return result;
 }
@@ -499,37 +475,116 @@ void BuildOptimizationProblem(const VectorOfEdges& Edges,
 bool SolveOptimizationProblem(ceres::Problem* problem)
 {
 
-  ceres::Solver::Options options;
-  options.max_num_iterations = 1000;
-  options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
+    ceres::Solver::Options options;
+    options.max_num_iterations = 1000;
+    options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
 
-  ceres::Solver::Summary summary;
-  ceres::Solve(options, problem, &summary);
+    ceres::Solver::Summary summary;
+    ceres::Solve(options, problem, &summary);
 
-  std::cout << summary.FullReport() << '\n';
+    std::cout << BOLDCYAN << summary.FullReport() << '\n';
 
-  return summary.IsSolutionUsable();
+    return summary.IsSolutionUsable();
 }
 
 // Output the poses to the file with format: id x y z q_x q_y q_z q_w.
 bool OutputPoses(const std::string& filename, const MapOfPoses& poses)
 {
-  std::fstream outfile;
-  outfile.open(filename.c_str(), std::istream::out);
-  if (!outfile) {
-    cout << "Error opening the file: " << filename;
-    return false;
-  }
-  for (std::map<int, Pose3d, std::less<int>,
+    std::fstream outfile;
+    outfile.open(filename.c_str(), std::istream::out);
+    if (!outfile) {
+        cout << "Error opening the file: " << filename;
+        return false;
+    }
+    for (std::map<int, Pose3d, std::less<int>,
+         Eigen::aligned_allocator<std::pair<const int, Pose3d> > >::
+         const_iterator poses_iter = poses.begin();
+         poses_iter != poses.end(); ++poses_iter) {
+        const std::map<int, Pose3d, std::less<int>,
                 Eigen::aligned_allocator<std::pair<const int, Pose3d> > >::
-           const_iterator poses_iter = poses.begin();
-       poses_iter != poses.end(); ++poses_iter) {
-    const std::map<int, Pose3d, std::less<int>,
-                   Eigen::aligned_allocator<std::pair<const int, Pose3d> > >::
-        value_type& pair = *poses_iter;
-    outfile << pair.first << " " << pair.second.p.transpose() << " "
-            << pair.second.q.x() << " " << pair.second.q.y() << " "
-            << pair.second.q.z() << " " << pair.second.q.w() << '\n';
-  }
-  return true;
+                value_type& pair = *poses_iter;
+        outfile << pair.first << " " << pair.second.p.transpose() << " "
+                << pair.second.q.x() << " " << pair.second.q.y() << " "
+                << pair.second.q.z() << " " << pair.second.q.w() << '\n';
+    }
+    return true;
 }
+
+cv::Mat DrawFrameMatch(Frame &currentFrame, Frame &lastFrame)
+{
+    cv::Mat imMatch = Mat::zeros(currentFrame.mImageGray.rows*2,currentFrame.mImageGray.cols,CV_8UC3);
+    vector<cv::KeyPoint> vCurrentKeys = currentFrame.mvKeys;
+    vector<cv::KeyPoint> vLastKeys    = lastFrame.mvKeys;
+    cv::Mat curr_Im, last_Im;
+    curr_Im = currentFrame.mImageGray.clone();
+    last_Im = lastFrame.mImageGray.clone();
+
+    if(curr_Im.channels()<3) //this should be always true
+    {
+        cvtColor(curr_Im,curr_Im,CV_GRAY2BGR);
+
+    }
+
+    if(last_Im.channels()<3) //this should be always true
+    {
+        cvtColor(last_Im,last_Im,CV_GRAY2BGR);
+
+    }
+
+    /*matches*/
+    map<int,int> matches = currentFrame.matchesId;
+    const float r = 5;
+
+    for(map<int,int>::iterator matches_iter = matches.begin(); matches_iter!=matches.end();matches_iter++)
+    {
+
+        int curr_id = matches_iter->first;
+        int last_id = matches_iter->second;
+        /*draw the current frame, the first value*/
+        cv::Point2f pt1,pt2,pt3,pt4;
+        pt1.x=vCurrentKeys[curr_id].pt.x-r;
+        pt1.y=vCurrentKeys[curr_id].pt.y-r;
+        pt2.x=vCurrentKeys[curr_id].pt.x+r;
+        pt2.y=vCurrentKeys[curr_id].pt.y+r;
+
+        pt3.x=vLastKeys[last_id].pt.x-r;
+        pt3.y=vLastKeys[last_id].pt.y-r;
+        pt4.x=vLastKeys[last_id].pt.x+r;
+        pt4.y=vLastKeys[last_id].pt.y+r;
+
+
+        //cv::rectangle(curr_Im,pt1,pt2,cv::Scalar(255,0,0));
+        cv::circle(curr_Im,vCurrentKeys[curr_id].pt,2,cv::Scalar(0,255,0),-1);
+
+        //cv::rectangle(last_Im,pt3,pt4,cv::Scalar(0,255,0));
+        cv::circle(last_Im,vLastKeys[last_id].pt,2,cv::Scalar(255,0,0),-1);
+
+
+    }
+
+
+
+    curr_Im.copyTo(imMatch(cv::Rect(0,0,curr_Im.cols,curr_Im.rows)));
+    last_Im.copyTo(imMatch(cv::Rect(0,curr_Im.rows,curr_Im.cols,curr_Im.rows)));
+    /*now we need to draw the lines*/
+
+    for(map<int,int>::iterator matches_iter = matches.begin(); matches_iter!=matches.end();matches_iter++)
+    {
+
+        int curr_id = matches_iter->first;
+        int last_id = matches_iter->second;
+        /*draw the current frame, the first value*/
+        cv::Point2f pt_curr,pt_last;
+
+        pt_curr = vCurrentKeys[curr_id].pt;
+        pt_last.x = vLastKeys[last_id].pt.x;
+        pt_last.y = vLastKeys[last_id].pt.y + curr_Im.rows;
+
+
+        cv::line(imMatch, pt_curr, pt_last, cv::Scalar(0,0,255),1,8);
+
+
+    }
+    return imMatch;
+}
+

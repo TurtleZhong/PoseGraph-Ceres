@@ -29,23 +29,47 @@ double normofTransform( cv::Mat rvec, cv::Mat tvec );
 
 int main(int argc, char *argv[])
 {
+    if(argc!=3)
+    {
+        cout << "Useage: ./match_test2 currentFrame.id lastFrame.id" << endl;
+        return 1;
+    }
 
-    Config::setParameterFile("/home/m/ws_orb2/src/POSE_GRAPH/config/config05.yaml");
+
+    string argv1 = argv[1];
+    string argv2 = argv[2];
+    int currentFrameIndex,lastFrameIndex;
+    stringstream ss1;
+    ss1 << argv1;
+    ss1 >> currentFrameIndex;
+    stringstream ss2;
+    ss2 << argv2;
+    ss2 >> lastFrameIndex;
+
+    cout << "id " << currentFrameIndex << " " << lastFrameIndex << endl;
+
+
+
+
+
+    Config::setParameterFile("../config/config00.yaml");
     string dir = Config::get<string>("sequence_dir");
+
+    GroundTruth gd;
 
     SequenceRun* sequenceRun = new SequenceRun();
     Frame currentFrame, lastFrame;
 
 
     char base_name[256];
-    sprintf(base_name,"%06d.png",2511);
+    sprintf(base_name,"%06d.png",currentFrameIndex);
     string left_img_file_name = dir + "/image_0/" + base_name;
     string right_img_file_name = dir + "/image_1/" + base_name;
     Mat Left = cv::imread(left_img_file_name,CV_LOAD_IMAGE_GRAYSCALE);
     Mat Right = cv::imread(right_img_file_name,CV_LOAD_IMAGE_GRAYSCALE);
 
     char base_name1[256];
-    sprintf(base_name1,"%06d.png",130);
+    sprintf(base_name1,"%06d.png",lastFrameIndex);
     string left_img_file_name1 = dir + "/image_0/" + base_name1;
     string right_img_file_name1 = dir + "/image_1/" + base_name1;
     Mat Left1 = cv::imread(left_img_file_name1,CV_LOAD_IMAGE_GRAYSCALE);
@@ -67,17 +91,22 @@ int main(int argc, char *argv[])
     ORBmatcher matcher(0.7, false);
 
 
-    int nmatches = matcher.MatcheTwoFrames(currentFrame,lastFrame,5,false);
+    int nmatches = matcher.MatcheTwoFrames(currentFrame,lastFrame,false);
     cout << "we got " << nmatches << " matches!" << endl;
-    DrawFrameMatch(currentFrame,lastFrame);
+
     RESULT_OF_PNP result;
+
     result = motionEstimate(lastFrame,currentFrame);
+    DrawFrameMatch(currentFrame,lastFrame);
 
     cout << "tvec = \n" << result.tvec << endl;
     cout << "inliers = " << result.inliers << endl;
 
     /*groundTruth*/
-    cv::Mat Tcl = currentFrame.mTcw * lastFrame.mTwc;
+    cv::Mat Tcw = gd.getFrameTcw(currentFrameIndex);
+    cv::Mat Twc = gd.getFrameTwc(lastFrameIndex);
+
+    cv::Mat Tcl = Tcw * Twc;
     cv::Mat tcl = Tcl.rowRange(0,3).col(3);
     cout << "GroundTruth tcl = " << tcl << endl;
 
@@ -237,11 +266,40 @@ RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2)
     cv::Mat cameraMatrix( 3, 3, CV_64F, camera_matrix_data );
     cv::Mat rvec, tvec, inliers;
     // 求解pnp
-    cv::solvePnPRansac( pts_obj, pts_img, cameraMatrix, cv::Mat(), rvec, tvec, false, 200, 4.0, 0.99, inliers );
+    cv::solvePnPRansac( pts_obj, pts_img, cameraMatrix, cv::Mat(), rvec, tvec, false, 200, 2.0, 0.99, inliers );
 
     result.rvec = rvec;
     result.tvec = tvec;
     result.inliers = inliers.rows;
+    //    cout << "inliers = " <<  endl << inliers << endl;
+
+    /*remove the outliers*/
+    map<int,int> matches_out;
+    for(int i = 0; i < inliers.rows; i++)
+    {
+        int row = inliers.at<int>(i);
+        map<int,int>::const_iterator map_iter_start = matches.begin();
+
+        if (row == 0)
+        {
+            matches_out.insert(make_pair(map_iter_start->first,map_iter_start->second));
+        }
+        else
+        {
+            while(row)
+            {
+                map_iter_start++;
+                row--;
+            }
+            matches_out.insert(make_pair(map_iter_start->first,map_iter_start->second));
+        }
+
+
+    }
+
+    //cout << "matches out.size = " << matches_out.size() << endl;
+    frame2.matchesId.clear();
+    frame2.matchesId = matches_out;
 
     return result;
 }

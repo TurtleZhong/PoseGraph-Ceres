@@ -30,7 +30,7 @@ double normofTransform( cv::Mat rvec, cv::Mat tvec );
 int main(int argc, char *argv[])
 {
 
-    Config::setParameterFile("/home/m/ws_orb2/src/POSE_GRAPH/config/config05.yaml");
+    Config::setParameterFile("../config/config00.yaml");
     string dir = Config::get<string>("sequence_dir");
 
     SequenceRun* sequenceRun = new SequenceRun();
@@ -55,11 +55,13 @@ int main(int argc, char *argv[])
 
         if(i > 3)
         {
-            int nmatches = matcher.MatcheTwoFrames(currentFrame,lastFrame,5,false);
+            int nmatches = matcher.MatcheTwoFrames(currentFrame,lastFrame,false);
             cout << "we got " << nmatches << " matches!" << endl;
-            DrawFrameMatch(currentFrame,lastFrame);
+
             RESULT_OF_PNP result;
             result = motionEstimate(lastFrame,currentFrame);
+
+            DrawFrameMatch(currentFrame,lastFrame);
 
             cout << "tvec = \n" << result.tvec << endl;
             cout << "inliers = " << result.inliers << endl;
@@ -67,10 +69,21 @@ int main(int argc, char *argv[])
             /*groundTruth*/
             cv::Mat Tcl = currentFrame.mTcw * lastFrame.mTwc;
             cv::Mat tcl = Tcl.rowRange(0,3).col(3);
-            cout << "GroundTruth tcl = " << tcl << endl;
+            cout << "GroundTruth tcl = " << endl<< tcl << endl;
 
             double norm = normofTransform(result.rvec, result.tvec);
             cout << "norm = " << norm << endl;
+
+            Vector3d p(1,2,3);
+//            double* pdata = p.data();
+//            cout << pdata[0] << pdata[1] << pdata[2] << endl;
+//            cout << *pdata << *(pdata+1) << *(pdata+2) << endl;
+
+//            double* y = pdata+1;
+//            cout << *y << endl;
+
+
+
 
 
         }
@@ -165,16 +178,16 @@ cv::Mat DrawFrameMatch(Frame &currentFrame, Frame &lastFrame)
 
     }
 
-//    stringstream ss;
-//    ss << mCurrentFrame.mnId;
-//    string tmp;
-//    ss >> tmp;
-//    string filename = "/home/m/ws_orb2/src/ORB_SLAM2/Matches/" + tmp + ".png";
-//    imwrite(filename, imMatch);
-//    cout << BOLDCYAN"write " << tmp << " suscessfully!" << endl;
-//    cv::resize(imMatch,imMatch,cv::Size(),0.5,0.5);
-      cv::imshow("matches",imMatch);
-      cv::waitKey(0);
+    //    stringstream ss;
+    //    ss << mCurrentFrame.mnId;
+    //    string tmp;
+    //    ss >> tmp;
+    //    string filename = "/home/m/ws_orb2/src/ORB_SLAM2/Matches/" + tmp + ".png";
+    //    imwrite(filename, imMatch);
+    //    cout << BOLDCYAN"write " << tmp << " suscessfully!" << endl;
+    //    cv::resize(imMatch,imMatch,cv::Size(),0.5,0.5);
+    cv::imshow("matches",imMatch);
+    cv::waitKey(0);
 
 
     return imMatch;
@@ -228,11 +241,40 @@ RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2)
     cv::Mat cameraMatrix( 3, 3, CV_64F, camera_matrix_data );
     cv::Mat rvec, tvec, inliers;
     // 求解pnp
-    cv::solvePnPRansac( pts_obj, pts_img, cameraMatrix, cv::Mat(), rvec, tvec, false, 200, 4.0, 0.99, inliers );
+    cv::solvePnPRansac( pts_obj, pts_img, cameraMatrix, cv::Mat(), rvec, tvec, false, 200, 2.0, 0.99, inliers );
 
     result.rvec = rvec;
     result.tvec = tvec;
     result.inliers = inliers.rows;
+    //    cout << "inliers = " <<  endl << inliers << endl;
+
+    /*remove the outliers*/
+    map<int,int> matches_out;
+    for(int i = 0; i < inliers.rows; i++)
+    {
+        int row = inliers.at<int>(i);
+        map<int,int>::const_iterator map_iter_start = matches.begin();
+
+        if (row == 0)
+        {
+            matches_out.insert(make_pair(map_iter_start->first,map_iter_start->second));
+        }
+        else
+        {
+            while(row)
+            {
+                map_iter_start++;
+                row--;
+            }
+            matches_out.insert(make_pair(map_iter_start->first,map_iter_start->second));
+        }
+
+
+    }
+
+    cout << "matches out.size = " << matches_out.size() << endl;
+    frame2.matchesId.clear();
+    frame2.matchesId = matches_out;
 
     return result;
 }

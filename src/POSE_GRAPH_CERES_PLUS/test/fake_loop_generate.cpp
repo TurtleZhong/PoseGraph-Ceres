@@ -17,7 +17,7 @@ using namespace POSE_GRAPH;
 int main(int argc, char *argv[])
 {
 
-    Config::setParameterFile("../config/config.yaml");
+    Config::setParameterFile("../config/config00.yaml");
     string dir = Config::get<string>("sequence_dir");
 
     ifstream inFile;

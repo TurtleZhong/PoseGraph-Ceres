@@ -1520,7 +1520,7 @@ int ORBmatcher::MatcheTwoFrames(Frame &CurrentFrame, const Frame &LastFrame, con
 
                 // Search in a window. Size depends on scale
                 //float radius = th*CurrentFrame.mvScaleFactors[nLastOctave];
-                float radius = 60;
+                float radius = 100;
 
                 vector<size_t> vIndices2;
 
@@ -1530,7 +1530,7 @@ int ORBmatcher::MatcheTwoFrames(Frame &CurrentFrame, const Frame &LastFrame, con
 //                    vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, 0, nLastOctave);
 //                else
 //                    vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, nLastOctave-1, nLastOctave+1);
-                vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, nLastOctave);
+                vIndices2 = CurrentFrame.GetFeaturesInArea(u,v, radius, 0, 7);
 
                 if(vIndices2.empty())
                     continue;
