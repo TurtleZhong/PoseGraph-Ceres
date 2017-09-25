@@ -35,6 +35,7 @@ int main(int argc, char *argv[])
 
     SequenceRun* sequenceRun = new SequenceRun();
     Frame currentFrame, lastFrame;
+    GroundTruth gd;
 
     for(int32_t i = 0; i < 2761; i = i+1)
     {
@@ -48,6 +49,9 @@ int main(int argc, char *argv[])
 
         sequenceRun->GrabImageStereo(Left,Right,0.0);
         currentFrame = sequenceRun->mCurrentFrame;
+
+        cv::Mat twc = gd.getFrametwc(i);
+        cout << "twc = " << endl << twc << endl;
 
         /*Do the feature matching test*/
 

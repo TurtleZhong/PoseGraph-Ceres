@@ -68,14 +68,6 @@ int main(int argc, char *argv[])
 
     for(int32_t i = 0; i < sequenceLength; i++)
     {
-
-//        char base_name[256];
-//        sprintf(base_name,"%06d.png",i);
-//        string left_img_file_name = dir + "/image_0/" + base_name;
-//        string right_img_file_name = dir + "/image_1/" + base_name;
-//        Mat Left = cv::imread(left_img_file_name,CV_LOAD_IMAGE_GRAYSCALE);
-//        Mat Right = cv::imread(right_img_file_name,CV_LOAD_IMAGE_GRAYSCALE);
-
         Mat Left = cv::imread(im.getImagePath(i)[0],CV_LOAD_IMAGE_GRAYSCALE);
         Mat Right = cv::imread(im.getImagePath(i)[1],CV_LOAD_IMAGE_GRAYSCALE);
         cout << RESET"Process :" << i << endl;
@@ -132,21 +124,8 @@ int main(int argc, char *argv[])
         cout << "May be some problems!" << endl;
 
     // Output the poses to the file with format: id x y z q_x q_y q_z q_w.
-    OutputPoses("../result/trajectory/trajectory_update_y_not_constant.txt",poses);
 
     /*suppose taht y is constant*/
-    GroundTruth gd;
-    int id = 0;
-
-    for(MapOfPoses::iterator pose_iter = poses.begin(); pose_iter!=poses.end(); pose_iter++)
-    {
-        cv::Mat twc = gd.getFrametwc(id);
-
-        pose_iter->second.p(1) = (double)twc.at<float>(1);
-
-        id++;
-
-    }
 
     OutputPoses("../result/trajectory/trajectory_update.txt",poses);
 
@@ -176,7 +155,7 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
         nmatches = matcher.MatcheTwoFrames(frame2,frame1,false); //5
         cout << RESET"Frame" << frame2.mnId << "--" <<"Frame" << frame1.mnId << " matches = " << nmatches << endl;
     }
-    else if (frame2.mnId > 3306 && frame2.mnId < 4200) //3701
+    else if (frame2.mnId > 3306 && frame2.mnId < 4000) //3701
     {
         ORBmatcher matcher(0.7,false);
 
@@ -303,7 +282,7 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
 
         }
     }
-    else if (currentFrame.mnId > 3306 && currentFrame.mnId < 4200) //3701
+    else if (currentFrame.mnId > 3306 && currentFrame.mnId < 4000) //3701
     {
         for(vector<Frame>::const_iterator vit = vFrames.begin(); vit!=(vFrames.end()-1);vit++)
         {
@@ -595,3 +574,4 @@ cv::Mat DrawFrameMatch(Frame &currentFrame, Frame &lastFrame)
     }
     return imMatch;
 }
+
