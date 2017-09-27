@@ -32,15 +32,15 @@ namespace POSE_GRAPH
 
     }
 
-    Vector3d Camera::world2camera(const Eigen::Vector3d &p_w, const Sophus::SE3 &T_c_w)
-    {
-        return T_c_w * p_w;
-    }
+//    Vector3d Camera::world2camera(const Eigen::Vector3d &p_w, const Sophus::SE3 &T_c_w)
+//    {
+//        return T_c_w * p_w;
+//    }
 
-    Vector3d Camera::camera2world(const Eigen::Vector3d &p_c, const Sophus::SE3 &T_c_w)
-    {
-        return T_c_w.inverse() * p_c;
-    }
+//    Vector3d Camera::camera2world(const Eigen::Vector3d &p_c, const Sophus::SE3 &T_c_w)
+//    {
+//        return T_c_w.inverse() * p_c;
+//    }
 
     Vector2d Camera::camera2pixel(const Eigen::Vector3d &p_c)
     {
@@ -80,20 +80,20 @@ namespace POSE_GRAPH
                     );
     }
 
-    Vector2d Camera::world2pixel(const Eigen::Vector3d &p_w, const Sophus::SE3 &T_c_w)
-    {
-        return camera2pixel( world2camera(p_w, T_c_w));
-    }
+//    Vector2d Camera::world2pixel(const Eigen::Vector3d &p_w, const Sophus::SE3 &T_c_w)
+//    {
+//        return camera2pixel( world2camera(p_w, T_c_w));
+//    }
 
-    Vector3d Camera::pixel2world(const Eigen::Vector2d &p_p, const Sophus::SE3 &T_c_w, double depth)
-    {
-        return camera2world( pixel2camera(p_p, depth), T_c_w);
-    }
+//    Vector3d Camera::pixel2world(const Eigen::Vector2d &p_p, const Sophus::SE3 &T_c_w, double depth)
+//    {
+//        return camera2world( pixel2camera(p_p, depth), T_c_w);
+//    }
 
-    Vector3d Camera::camera2camera(const Eigen::Vector3d &p_l, const Sophus::SE3 &T_c_l)
-    {
-        return T_c_l * p_l;
-    }
+//    Vector3d Camera::camera2camera(const Eigen::Vector3d &p_l, const Sophus::SE3 &T_c_l)
+//    {
+//        return T_c_l * p_l;
+//    }
 }
 
 

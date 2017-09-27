@@ -1,7 +1,6 @@
 #include "common_include.h"
 #include "config.h"
 #include "Frame.h"
-#include "camera.h"
 #include "MapPoint.h"
 #include "converter.h"
 #include "SequenceRun.h"
@@ -201,15 +200,16 @@ cv::Mat DrawFrameMatch(Frame &currentFrame, Frame &lastFrame)
 /*we need a simple function to estimate the inliers and pose*/
 RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2)
 {
+    double fx_ = Config::get<double>("Camera.fx");
+    double fy_ = Config::get<double>("Camera.fy");
+    double cx_ = Config::get<double>("Camera.cx");
+    double cy_ = Config::get<double>("Camera.cy");
+
     RESULT_OF_PNP result;
     map<int,int> matches = frame2.matchesId;
-    // 第一个帧的三维点
     vector<cv::Point3f> pts_obj;
-    // 第二个帧的图像点
     vector< cv::Point2f > pts_img;
 
-    // 相机内参
-    Camera* pCamera = new Camera();
 
     for(map<int,int>::const_iterator mit = matches.begin(); mit!=matches.end(); mit++)
     {
@@ -221,7 +221,9 @@ RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2)
         cv::Point2f pt ( p.x, p.y );
         float depth = frame1.mvDepth[mit->second];
 
-        cv::Point3f pd = pCamera->pixel2camera(pt,depth);
+        //cv::Point3f pd = pCamera->pixel2camera(pt,depth);
+        cv::Mat p3d = frame2.pixel2Camera(pt.x,pt.y,depth);
+        cv::Point3f pd(p3d.at<float>(0),p3d.at<float>(1),p3d.at<float>(2));
         pts_obj.push_back( pd );
     }
 
@@ -233,11 +235,9 @@ RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2)
     }
 
 
-
-
     double camera_matrix_data[3][3] = {
-        {(double)pCamera->fx_, 0, (double)pCamera->cx_},
-        {0, (double)pCamera->fy_, (double)pCamera->cy_},
+        {fx_, 0, cx_},
+        {0, fy_, cy_},
         {0, 0, 1}
     };
 
@@ -276,7 +276,7 @@ RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2)
 
     }
 
-    cout << "matches out.size = " << matches_out.size() << endl;
+    //cout << "matches out.size = " << matches_out.size() << endl;
     frame2.matchesId.clear();
     frame2.matchesId = matches_out;
 

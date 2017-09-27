@@ -20,6 +20,7 @@
 
 
 #include "converter.h"
+#include "common_include.h"
 
 namespace POSE_GRAPH
 {
@@ -101,7 +102,14 @@ cv::Mat Converter::toCvSE3(const Eigen::Matrix<double,3,3> &R, const Eigen::Matr
 Eigen::Matrix<double,3,1> Converter::toVector3d(const cv::Mat &cvVector)
 {
     Eigen::Matrix<double,3,1> v;
-    v << cvVector.at<float>(0), cvVector.at<float>(1), cvVector.at<float>(2);
+    cv::Mat cvVectorCopy;
+    if(cvVectorCopy.type() == 6)
+    {
+       cvVector.convertTo(cvVectorCopy,CV_32FC1);
+       v << cvVectorCopy.at<float>(0), cvVectorCopy.at<float>(1), cvVectorCopy.at<float>(2);
+    }
+    else
+        v << cvVector.at<float>(0), cvVector.at<float>(1), cvVector.at<float>(2);
 
     return v;
 }
@@ -116,11 +124,25 @@ Eigen::Matrix<double,3,1> Converter::toVector3d(const cv::Point3f &cvPoint)
 
 Eigen::Matrix<double,3,3> Converter::toMatrix3d(const cv::Mat &cvMat3)
 {
-    Eigen::Matrix<double,3,3> M;
+    Eigen::Matrix<double,3,3> M = Eigen::Matrix3d::Identity();
+    cv::Mat cvMat3Copy;
+    if(cvMat3.type() == 6)
+    {
+        cvMat3.convertTo(cvMat3Copy,CV_32FC1);
+        M << cvMat3Copy.at<float>(0,0), cvMat3Copy.at<float>(0,1), cvMat3Copy.at<float>(0,2),
+             cvMat3Copy.at<float>(1,0), cvMat3Copy.at<float>(1,1), cvMat3Copy.at<float>(1,2),
+             cvMat3Copy.at<float>(2,0), cvMat3Copy.at<float>(2,1), cvMat3Copy.at<float>(2,2);
+    }
+    else
+    {
 
-    M << cvMat3.at<float>(0,0), cvMat3.at<float>(0,1), cvMat3.at<float>(0,2),
-         cvMat3.at<float>(1,0), cvMat3.at<float>(1,1), cvMat3.at<float>(1,2),
-         cvMat3.at<float>(2,0), cvMat3.at<float>(2,1), cvMat3.at<float>(2,2);
+        M << cvMat3.at<float>(0,0), cvMat3.at<float>(0,1), cvMat3.at<float>(0,2),
+             cvMat3.at<float>(1,0), cvMat3.at<float>(1,1), cvMat3.at<float>(1,2),
+             cvMat3.at<float>(2,0), cvMat3.at<float>(2,1), cvMat3.at<float>(2,2);
+    }
+
+
+
 
     return M;
 }
@@ -147,19 +169,6 @@ uint8_t* Converter::toPng(cv::Mat image)
     }
 
     return img_data;
-}
-
-Sophus::SE3 Converter::toSE3(const cv::Mat &cvT)
-{
-    Eigen::Matrix<double,3,3> R;
-    R << cvT.at<float>(0,0), cvT.at<float>(0,1), cvT.at<float>(0,2),
-         cvT.at<float>(1,0), cvT.at<float>(1,1), cvT.at<float>(1,2),
-         cvT.at<float>(2,0), cvT.at<float>(2,1), cvT.at<float>(2,2);
-
-    Eigen::Matrix<double,3,1> t(cvT.at<float>(0,3), cvT.at<float>(1,3), cvT.at<float>(2,3));
-    Sophus::SE3 SE3_Rt(R,t);
-
-    return SE3_Rt;
 }
 
 cv::Mat Converter::toCvMat(const Eigen::Vector3d &m, int flag = 1)

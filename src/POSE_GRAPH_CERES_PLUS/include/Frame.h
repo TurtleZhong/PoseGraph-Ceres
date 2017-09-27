@@ -87,6 +87,9 @@ public:
     // new add
     cv::Mat pixel2Camera(const int &i);
 
+    cv::Mat pixel2Camera(const int u, const int v, const float depth);
+    cv::Point2f camera2Pixel(cv::Mat &x3D);
+
 
 public:
 

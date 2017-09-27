@@ -31,6 +31,7 @@ public:
     Mat getFrameTcw(int frameID);
     void loadPoses1();
     void loadPoses2();
+    vector<cv::Mat> getPoses(){return poses;}
 
 private:
     vector <cv::Mat> poses;

@@ -1,5 +1,7 @@
 # This is a simple example of Pose Graph
 
+# 1.Description
+wait to add..
 
 
 # 2. Prerequisites
@@ -14,7 +16,7 @@ Download and install instructions can be found at: http://eigen.tuxfamily.org. *
 ## Ceres
 Download and install instructions can be found at: http://www.ceres-solver.org/installation.html.
 
-## Sophus
+## Sophus [++Sophus has been removed!!!++]
 git@github.com:strasdat/Sophus.git
 cd Sophus
 git checkout a621ff
@@ -22,20 +24,29 @@ mkdir build & cd build
 cmake ..
 sudo make install
 
-# Folder format
+# 3. Folder format
+**wait to add**
+
+# 4. How to build
 mkdir build
 cd build
 cmake ..
 make
 
+# 5. How to run
 ####Then in the bin folder run:
 ./pose_graph_ceres
 
-then you will get two txt file: pose_graph.txt and pose graph_before.txt
+then you will get result in result/
 
 ---
 
-get into the path_plot folder run:
+# 6. Show the results
+
+get into the result/PlotShow folder run:
 ./plot*.sh
 then you will get:
-![Pose_Graph](image/ceres_KITTI08.png)
+![Pose_Graph](result/PlotShow/pose_graph.png)
+and trajectory
+![x_z](result/PlotShow/KITTI00_x_z.png)
+# Good Luck!

@@ -9,7 +9,7 @@ namespace POSE_GRAPH
 GroundTruth::GroundTruth()
 {
     int fileFormat = Config::get<int> ("trajectory_format");
-    cout << "fileFormat = " << fileFormat << endl;
+//    cout << "fileFormat = " << fileFormat << endl;
 
     if(fileFormat == 1)
         this->loadPoses1();

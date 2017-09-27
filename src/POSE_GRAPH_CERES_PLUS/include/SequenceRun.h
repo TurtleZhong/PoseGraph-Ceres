@@ -48,26 +48,4 @@ protected:
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #endif // SEQUENCERUN_H

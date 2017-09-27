@@ -24,8 +24,8 @@
 #include<opencv2/core/core.hpp>
 #include<png++/png.hpp>
 #include<Eigen/Dense>
-#include<sophus/so3.h>
-#include<sophus/se3.h>
+//#include<sophus/so3.h>
+//#include<sophus/se3.h>
 #include"types.h" /*to use the Pos3d*/
 
 namespace POSE_GRAPH
@@ -50,7 +50,7 @@ public:
     static Eigen::Quaterniond toQuaternion(const cv::Mat &M);
     static uint8_t* toPng(cv::Mat image);
 
-    static Sophus::SE3 toSE3(const cv::Mat &cvT);
+    //static Sophus::SE3 toSE3(const cv::Mat &cvT);
     static cv::Mat toCvMat(const Eigen::Vector3d &m, int flag);
     static Eigen::Isometry3d toIsometry3d(const cv::Mat &M);
     static Pose3d toPose3d(const cv::Mat &Twc);

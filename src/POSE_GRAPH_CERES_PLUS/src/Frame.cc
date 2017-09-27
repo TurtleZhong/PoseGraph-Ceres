@@ -594,5 +594,38 @@ cv::Mat Frame::pixel2Camera(const int &i)
         return cv::Mat();
 }
 
+cv::Mat Frame::pixel2Camera(const int u, const int v, const float depth)
+{
+    const float z = depth;
+    if(z>0)
+    {
+        const double x = (u-cx)*z*invfx;
+        const double y = (v-cy)*z*invfy;
+
+        cv::Mat x3D = (cv::Mat_<float>(3,1) << x, y, z);
+        return x3D;
+    }
+    else
+        return cv::Mat();
+}
+
+cv::Point2f Frame::camera2Pixel(cv::Mat &x3D)
+{
+    float x = x3D.at<float>(0,0);
+    float y = x3D.at<float>(1,0);
+    float z = x3D.at<float>(2,0);
+
+    if(z>0)
+    {
+        cv::Point2f pixel;
+        pixel.x = fx * (x/z) + cx;
+        pixel.y = fy * (y/z) + cy;
+        return pixel;
+    }
+    else
+        return cv::Point2f();
+
+}
+
 
 } //namespace ORB_SLAM

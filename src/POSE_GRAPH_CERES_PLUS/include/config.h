@@ -5,6 +5,7 @@
 
 namespace POSE_GRAPH
 {
+
     class Config
     {
     private:

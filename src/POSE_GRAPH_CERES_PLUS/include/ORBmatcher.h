@@ -65,7 +65,6 @@ public:
 
 protected:
 
-    //bool CheckDistEpipolarLine(const cv::KeyPoint &kp1, const cv::KeyPoint &kp2, const cv::Mat &F12, const KeyFrame *pKF);
 
     float RadiusByViewingCos(const float &viewCos);
 

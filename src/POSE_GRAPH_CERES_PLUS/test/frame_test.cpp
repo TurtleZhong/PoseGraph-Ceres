@@ -1,7 +1,6 @@
 #include "common_include.h"
 #include "config.h"
 #include "Frame.h"
-#include "camera.h"
 #include "MapPoint.h"
 #include "converter.h"
 #include "SequenceRun.h"

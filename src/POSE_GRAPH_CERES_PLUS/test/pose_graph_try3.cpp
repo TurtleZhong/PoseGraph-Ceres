@@ -1,7 +1,6 @@
 #include "common_include.h"
 #include "config.h"
 #include "Frame.h"
-#include "camera.h"
 #include "MapPoint.h"
 #include "converter.h"
 #include "SequenceRun.h"
@@ -356,27 +355,33 @@ int findFeatureMatches(Frame &lastFrame,
 /*we need a simple function to estimate the inliers and pose*/
 RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2, vector<DMatch> &matches)
 {
+    double fx_ = Config::get<double>("Camera.fx");
+    double fy_ = Config::get<double>("Camera.fy");
+    double cx_ = Config::get<double>("Camera.cx");
+    double cy_ = Config::get<double>("Camera.cy");
+
     RESULT_OF_PNP result;
-    // 第一个帧的三维点
+    map<int,int> matches = frame2.matchesId;
     vector<cv::Point3f> pts_obj;
-    // 第二个帧的图像点
     vector< cv::Point2f > pts_img;
 
-    // 相机内参
-    Camera* pCamera = new Camera();
-    for (size_t i=0; i<matches.size(); i++)
+
+    for(map<int,int>::const_iterator mit = matches.begin(); mit!=matches.end(); mit++)
     {
-        // query 是第一个, train 是第二个
-        cv::Point2f p = frame1.mvKeys[matches[i].queryIdx].pt;
-        pts_img.push_back( cv::Point2f( frame2.mvKeys[matches[i].trainIdx].pt ) );
+
+        cv::Point2f p = frame1.mvKeys[mit->second].pt;
+        pts_img.push_back( cv::Point2f( frame2.mvKeys[mit->first].pt ) );
 
         // 将(u,v,d)转成(x,y,z)
         cv::Point2f pt ( p.x, p.y );
-        float depth = frame1.mvDepth[matches[i].queryIdx];
+        float depth = frame1.mvDepth[mit->second];
 
-        cv::Point3f pd = pCamera->pixel2camera(pt,depth);
+        //cv::Point3f pd = pCamera->pixel2camera(pt,depth);
+        cv::Mat p3d = frame2.pixel2Camera(pt.x,pt.y,depth);
+        cv::Point3f pd(p3d.at<float>(0),p3d.at<float>(1),p3d.at<float>(2));
         pts_obj.push_back( pd );
     }
+
 
     if (pts_obj.size() ==0 || pts_img.size()==0)
     {
@@ -385,11 +390,9 @@ RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2, vector<DMatch> &match
     }
 
 
-
-
     double camera_matrix_data[3][3] = {
-        {(double)pCamera->fx_, 0, (double)pCamera->cx_},
-        {0, (double)pCamera->fy_, (double)pCamera->cy_},
+        {fx_, 0, cx_},
+        {0, fy_, cy_},
         {0, 0, 1}
     };
 
@@ -397,11 +400,40 @@ RESULT_OF_PNP motionEstimate(Frame &frame1, Frame &frame2, vector<DMatch> &match
     cv::Mat cameraMatrix( 3, 3, CV_64F, camera_matrix_data );
     cv::Mat rvec, tvec, inliers;
     // 求解pnp
-    cv::solvePnPRansac( pts_obj, pts_img, cameraMatrix, cv::Mat(), rvec, tvec, false, 100, 1.0, 100, inliers );
+    cv::solvePnPRansac( pts_obj, pts_img, cameraMatrix, cv::Mat(), rvec, tvec, false, 200, 2.0, 0.99, inliers );
 
     result.rvec = rvec;
     result.tvec = tvec;
     result.inliers = inliers.rows;
+    //    cout << "inliers = " <<  endl << inliers << endl;
+
+    /*remove the outliers*/
+    map<int,int> matches_out;
+    for(int i = 0; i < inliers.rows; i++)
+    {
+        int row = inliers.at<int>(i);
+        map<int,int>::const_iterator map_iter_start = matches.begin();
+
+        if (row == 0)
+        {
+            matches_out.insert(make_pair(map_iter_start->first,map_iter_start->second));
+        }
+        else
+        {
+            while(row)
+            {
+                map_iter_start++;
+                row--;
+            }
+            matches_out.insert(make_pair(map_iter_start->first,map_iter_start->second));
+        }
+
+
+    }
+
+    //cout << "matches out.size = " << matches_out.size() << endl;
+    frame2.matchesId.clear();
+    frame2.matchesId = matches_out;
 
     return result;
 }

@@ -9,6 +9,7 @@
 #include "PoseGraph3dError.h"
 #include "types.h"
 #include "ImageRead.h"
+#include "MotionEstimate.h"
 
 /*ceres parts*/
 #include <ceres/ceres.h>
@@ -226,6 +227,19 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
             /*here we need use the estimated pose but not the groundTruth*/
             if(!frame2.mHaveLoopEdge && !frame1.mHaveLoopEdge)
             {
+
+                /*use ceres to optimize the pose between two frames*/
+//                Frame CurrentFrame(frame2);
+//                Frame LastFrame(frame1);
+////                ceres::Problem problem;
+////                MotionEstimate motionestimate(CurrentFrame,LastFrame,&problem);
+////                motionestimate.Estimate();
+
+////                cv::Mat Tcl = motionestimate.toCvMat();
+
+
+
+
                 cv::Mat R;
                 cv::Rodrigues(result.rvec,R);
                 R.convertTo(R,CV_32FC1);

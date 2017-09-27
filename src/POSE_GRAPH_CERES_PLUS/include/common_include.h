@@ -31,10 +31,10 @@ using Eigen::Vector2d;
 using Eigen::Vector3d;
 
 // for Sophus
-#include <sophus/se3.h>
-#include <sophus/so3.h>
-using Sophus::SE3;
-using Sophus::SO3;
+//#include <sophus/se3.h>
+//#include <sophus/so3.h>
+//using Sophus::SE3;
+//using Sophus::SO3;
 
 // for cv
 #include <opencv2/opencv.hpp>
@@ -56,6 +56,8 @@ using cv::Mat;
 
 
 using namespace std; 
+
+
 
 #define RESET "\033[0m"
 #define BLACK "\033[30m"               /* Black */

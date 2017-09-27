@@ -42,8 +42,8 @@ include_directories("/usr/include/eigen3")
 #find_package(Eigen3 3.1.0 REQUIRED)
 
 # Sophus
-find_package( Sophus REQUIRED )
-include_directories( ${Sophus_INCLUDE_DIRS} )
+#find_package( Sophus REQUIRED )
+#include_directories( ${Sophus_INCLUDE_DIRS} )
 
 # ceres
 find_package(Ceres REQUIRED)
@@ -62,19 +62,19 @@ add_library(${PROJECT_NAME} SHARED
     src/config.cc
     src/converter.cc
     src/GroundTruth.cc
-    src/camera.cc
     src/Frame.cc
     src/MapPoint.cc
     src/ORBextractor.cc
     src/ORBmatcher.cc
     src/SequenceRun.cc
     src/ImageRead.cc
+    src/MotionEstimate.cc
+    src/camera.cc
 
 )
 
 target_link_libraries(${PROJECT_NAME}
 ${OpenCV_LIBS}
-${Sophus_LIBRARIES}
 ${EIGEN3_LIBS}
 ${CERES_LIBRARIES}
 )
@@ -96,4 +96,26 @@ target_link_libraries(match_test ${PROJECT_NAME})
 
 add_executable(match_test2 test/match_test2.cpp )
 target_link_libraries(match_test2 ${PROJECT_NAME})
+
+add_executable(motionestimate test/motionestimate.cpp )
+target_link_libraries(motionestimate ${PROJECT_NAME}) 
+
+add_executable(motionestimate_wholesequence test/motionestimate_wholesequence.cpp )
+target_link_libraries(motionestimate_wholesequence ${PROJECT_NAME}) 
+
+add_executable(pose_graph_ceres_plus test/pose_graph_ceres_plus.cpp )
+target_link_libraries(pose_graph_ceres_plus ${PROJECT_NAME})
+
+add_executable(generate_edges_from_trajectory_origion test/generate_edges_from_trajectory_origion.cpp )
+target_link_libraries(generate_edges_from_trajectory_origion ${PROJECT_NAME}) 
+
+add_executable(read_loop_edges_test test/read_loop_edges_test.cpp )
+target_link_libraries(read_loop_edges_test ${PROJECT_NAME})
+
+add_executable(pose_graph_ceres_plus_finial test/pose_graph_ceres_plus_finial.cpp )
+target_link_libraries(pose_graph_ceres_plus_finial ${PROJECT_NAME}) 
+
+
+
+
 

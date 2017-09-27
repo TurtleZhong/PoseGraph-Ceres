@@ -159,6 +159,7 @@ bool SequenceRun::GenerateFrameMappoints()
             /*generate the mappoints*/
             /*modified !! notice*/
             cv::Mat x3D = mCurrentFrame.pixel2Camera(i);
+            //cout << "mappoints 3d = \n" << x3D << endl;
             MapPoint* pMap = new MapPoint(x3D, &mCurrentFrame, i);
 
             mCurrentFrame.mvpMapPoints[i] = pMap;
