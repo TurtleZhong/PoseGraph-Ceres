@@ -169,7 +169,7 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
         nmatches = matcher.MatcheTwoFrames(frame2,frame1,5,false);
         cout << "matches = " << nmatches << endl;
     }
-    else if (frame2.mnId > 3306 && frame2.mnId < 3701)
+    else if (frame2.mnId > 3306 && frame2.mnId < 3500) //3701
     {
         ORBmatcher matcher(0.7,true);
 
@@ -178,9 +178,9 @@ void checkFrame(Frame &frame1, Frame &frame2, VectorOfEdges &Edges)
     }
     else if (frame2.mnId > 4460 && frame2.mnId < 4526)
     {
-        ORBmatcher matcher(0.7,true);
+        ORBmatcher matcher(0.7,false);
 
-        nmatches = matcher.MatcheTwoFrames(frame2,frame1,5,false);
+        nmatches = matcher.MatcheTwoFrames(frame2,frame1,false);
         cout << "matches = " << nmatches << endl;
     }
 
@@ -271,7 +271,7 @@ std::vector<Frame> getCandidateFrames(vector<Frame>& vFrames, Frame &currentFram
 
         }
     }
-    else if (currentFrame.mnId > 3306 && currentFrame.mnId < 3701)
+    else if (currentFrame.mnId > 3306 && currentFrame.mnId < 3500) //3701
     {
         for(vector<Frame>::const_iterator vit = vFrames.begin(); vit!=(vFrames.end()-1);vit++)
         {

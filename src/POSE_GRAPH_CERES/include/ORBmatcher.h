@@ -52,6 +52,7 @@ public:
     int SearchByProjection(Frame &CurrentFrame, const Frame &LastFrame, const float th, const bool bMono);
 
     int MatcheTwoFrames(Frame &CurrentFrame, const Frame &LastFrame, const float th, const bool bMono);
+    int MatcheTwoFrames(Frame &CurrentFrame, const Frame &LastFrame, const bool bMono);
 
     // Project MapPoints seen in KeyFrame into the Frame and search matches.
     // Used in relocalisation (Tracking)
