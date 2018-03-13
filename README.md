@@ -4,8 +4,11 @@
 
 # 1.Description
 This is an **offline tool for Pose-Graph**. You will get an trajectory file (usually with x,y,z) after you have run the **SLAM** and **VO** algorithm. If the datasets contains a loop, This tool can optimize the pose and eliminate the cumulative error.
+
 **Note:** This repo contains some other test files. All the useful file is [POSE_GRAPH_CERES_PLUS](https://github.com/TurtleZhong/PoseGraph-Ceres/tree/master/src/POSE_GRAPH_CERES_PLUS) folder.
+
 **Videos:** [Youtube](https://youtu.be/ZyTNLuJWHx0), [Local Demo](src/POSE_GRAPH_CERES_PLUS/demo_video)
+
 **Gif:**
 ![pose_graph_results](src/POSE_GRAPH_CERES_PLUS/demo_video/pose_graph.gif)
 
@@ -86,4 +89,4 @@ then you will get:
 ![Pose_Graph](src/POSE_GRAPH_CERES_PLUS/result/PlotShow/pose_graph.png)
 and trajectory
 ![x_z](src/POSE_GRAPH_CERES_PLUS/result/PlotShow/KITTI00_x_z.png)
-# Good Luck!
+# Good Luck to You!
